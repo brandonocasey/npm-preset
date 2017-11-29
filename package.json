@@ -1,0 +1,36 @@
+{
+  "name": "npm-script",
+  "version": "0.0.0",
+  "description": "",
+  "bin": {
+    "npms": "./src/npms.js"
+  },
+  "scripts": {
+    "test": "ava test/unit/*.test.js"
+  },
+  "author": "brandonocasey <brandonocasey@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "CONTRIBUTING.md",
+    "src/",
+    "test/"
+  ],
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "find-root": "^1.1.0",
+    "npm-run": "^4.1.2",
+    "shell-quote": "^1.6.1"
+  },
+  "ava": {
+    "require": "babel-register"
+  },
+  "babel": {
+    "presets": [
+      "@ava/stage-4"
+    ]
+  },
+  "devDependencies": {
+    "ava": "^0.24.0",
+    "babel-register": "^6.26.0"
+  }
+}

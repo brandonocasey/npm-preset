@@ -2,7 +2,6 @@ var config = require('./config');
 var shellQuote = require('shell-quote');
 var npmRun = require('npm-run');
 var Promise = require('bluebird');
-var shorten = require('./shorten');
 
 /**
  * Run a command on the terminal and attatch that command
@@ -24,14 +23,14 @@ var spawn = function(command) {
       args = shellQuote.parse(command);
     }
     var bin = args.shift();
-    var child = npmRun.spawn(bin, args, {cwd: config.root});
+    var child = npmRun.spawn(bin, args, {cwd: config.root, env: {FORCE_COLOR: true}});
 
     child.stdout.on('data', function(chunk) {
-      process.stdout.write(shorten(chunk.toString()));
+      process.stdout.write(chunk);
     });
 
     child.stderr.on('data', function(chunk) {
-      process.stderr.write(shorten(chunk.toString()));
+      process.stderr.write(chunk);
     });
 
     process.on('exit', function() {

@@ -3,7 +3,9 @@
 var config = require('./config');
 var runScript = require('./run-script');
 var scriptName = process.argv[2];
+var filter = require('./filter');
 
+var unfilter = filter();
 // scripts can be passed args by passing -- and then the args:
 // build:test -- arg1 arg2
 var scriptArgsStartIndex = process.argv.indexOf('--');

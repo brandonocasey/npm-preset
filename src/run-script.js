@@ -1,6 +1,5 @@
 var spawn = require('./spawn');
 var Promise = require('bluebird');
-var shorten = require('./shorten');
 var config = require('./config');
 var shellQuote = require('shell-quote');
 var scripts = config.pkg.scripts;
@@ -27,7 +26,7 @@ var runCommand = function(scriptName, c, args) {
 	// mimic npm output
 	console.log();
 	console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' ' + config.root);
-	console.log('> ' + shorten(c));
+	console.log('> ' + c);
 	console.log();
 
 	c = shellQuote.parse(c);

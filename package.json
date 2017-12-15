@@ -17,10 +17,12 @@
   ],
   "dependencies": {
     "bluebird": "^3.5.0",
+    "commander": "^2.12.2",
     "find-root": "^1.1.0",
     "intercept-stdout": "^0.1.2",
     "npm-run": "^4.1.2",
-    "shell-quote": "^1.6.1"
+    "shell-quote": "^1.6.1",
+    "yargs": "^10.0.3"
   },
   "ava": {
     "require": "babel-register"
@@ -31,6 +33,7 @@
     ]
   },
   "devDependencies": {
+    "nexe": "^2.0.0-rc.22",
     "ava": "^0.24.0",
     "babel-register": "^6.26.0"
   }

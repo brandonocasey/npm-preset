@@ -1,38 +1,72 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
-var config = require('./config');
-var runScript = require('./run-script');
-var scriptName = process.argv[2];
-var filter = require('./filter');
+const config = require('./config');
+const runScript = require('./run-script');
+const shorten = require('./shorten');
+const yargs = require('yargs');
+const intercept = require('intercept-stdout');
+const Promise = require('bluebird');
 
-var unfilter = filter();
-// scripts can be passed args by passing -- and then the args:
-// build:test -- arg1 arg2
-var scriptArgsStartIndex = process.argv.indexOf('--');
-var scriptArgs = [];
+const index = process.argv.indexOf('--');
+let subArgs = [];
 
-if (scriptArgsStartIndex !== -1) {
-	scriptArgs = process.argv.splice(scriptArgsStartIndex + 1);
+if (index !== -1) {
+  process.argv.splice(index, 1);
+  subArgs = process.argv.splice(index);
 }
 
-if (!config.pkg.scripts || !Object.keys(config.pkg.scripts).length) {
-	console.error('There are no npm scripts to run, please add some!');
-	process.exit(1);
+const argv = yargs
+  .option('version', {alias: 'V', default: false, describe: 'print the version and exit'})
+  .option('list', {alias: 'l', default: false, describe: 'print available npms scripts and exit'})
+  .option('quiet', {alias: 'q', default: false, describe: 'only output errors and warnings'})
+  .option('print-config', {alias: 'pc', default: false, describe: 'print the config and exit'})
+  .option('parallel', {alias: 'p', default: [], array: true, describe: 'run scripts in parallel'})
+  .option('series', {alias: 's', default: [], array: true, describe: 'run scripts in series'})
+  .option('no-shorten', {alias: 'ns', default: false, describe: 'do not shorten paths'})
+  .parse(process.argv.splice(2));
+
+// by default commands are run in series
+argv.series = argv.s = argv.series.concat(argv._);
+
+if (!argv.noShorten) {
+  // shorten stdoud and stderr
+  intercept(shorten, shorten);
 }
 
-if (scriptName === '--help') {
-	console.log(config.pkg.scripts);
-	process.exit(0);
+if (argv.quiet) {
+  // intercept stdout, to be nothing
+  intercept((s) => '');
 }
 
-if (scriptName === '--config') {
-  console.log(JSON.stringify(config, null, 2));
+if (argv.printConfig) {
+  console.log(config);
   process.exit(0);
 }
 
-runScript(scriptName, scriptArgs).then(function() {
-	process.exit(0);
+if (argv.list) {
+  console.log(config.pkg.scripts);
+  process.exit(0);
+}
+
+if (!config.pkg.scripts || !Object.keys(config.pkg.scripts).length) {
+  console.error('There are no npm scripts to run, please add some!');
+  process.exit(1);
+}
+
+const promises = [];
+
+argv.parallel.forEach(function(scriptName) {
+  promises.push(runScript(scriptName, subArgs));
+});
+
+promises.push(Promise.mapSeries(argv.series, function(scriptName) {
+  return runScript(scriptName, subArgs);
+}));
+
+Promise.all(promises).then(function() {
+  process.exit(0);
 }).error(function(error) {
-	console.error(error);
-	process.exit(1);
+  console.error(error);
+  process.exit(1);
 });

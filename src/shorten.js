@@ -1,6 +1,5 @@
 var config = require('./config');
 var path = require('path');
-var intercept = require('intercept-stdout');
 
 /**
  * shorten npm-script paths so that we dont print
@@ -33,9 +32,4 @@ var shorten = function(str) {
 	return str;
 };
 
-var filter = function() {
-	// shorten stdout and stderr
-	return intercept(shorten, shorten);
-};
-
-module.exports = filter;
+module.exports = shorten;

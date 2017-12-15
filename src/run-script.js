@@ -1,8 +1,11 @@
-var spawn = require('./spawn');
-var Promise = require('bluebird');
-var config = require('./config');
-var shellQuote = require('shell-quote');
-var scripts = config.pkg.scripts;
+/* eslint-disable no-console */
+/* eslint-disable max-len */
+
+const spawn = require('./spawn');
+const Promise = require('bluebird');
+const config = require('./config');
+const shellQuote = require('shell-quote');
+const scripts = config.pkg.scripts;
 
 /**
  * Run a command on the terminal
@@ -22,37 +25,38 @@ var scripts = config.pkg.scripts;
  * @return {Promise}
  *         A promise that is resolved when the script or command that was run finishes
  */
-var runCommand = function(scriptName, c, args) {
-	// mimic npm output
-	console.log();
-	console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' ' + config.root);
-	console.log('> ' + c);
-	console.log();
+const runCommand = function(scriptName, c, args) {
+  // mimic npm output
+  console.log();
+  console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' ' + config.root);
+  console.log('> ' + c);
+  console.log();
 
-	c = shellQuote.parse(c);
+  c = shellQuote.parse(c);
 
-	if (c[0] === 'npm' && c[1] === 'run') {
-		// remove npm
-		c.splice(0, 1);
-		// remove run
-		c.splice(0, 1);
+  if (c[0] === 'npm' && c[1] === 'run') {
+    // remove npm
+    c.splice(0, 1);
+    // remove run
+    c.splice(0, 1);
 
-		var subArgs = [];
-		var subArgStartIndex = c.indexOf('--');
+    let subArgs = [];
+    const subArgStartIndex = c.indexOf('--');
 
-		if (subArgStartIndex !== -1) {
-			// remove --
-			c.splice(subArgStartIndex, 1);
+    if (subArgStartIndex !== -1) {
+      // remove --
+      c.splice(subArgStartIndex, 1);
 
-			subArgs = c.splice(subArgStartIndex);
-		}
+      subArgs = c.splice(subArgStartIndex);
+    }
 
-		var subScript = c.join('');
-		return runScript(subScript, subArgs);
-	}
+    const subScript = c.join('');
 
-	c = c.concat(args);
-	return spawn(c);
+    return runScript(subScript, subArgs);
+  }
+
+  c = c.concat(args);
+  return spawn(c);
 };
 
 /**
@@ -68,68 +72,68 @@ var runCommand = function(scriptName, c, args) {
  *         A promise that is resolved/rejected when the script pre-scripts, and
  *         post scripts have been run or errored.
  */
-var runScript = function(scriptName, args) {
-	if (Object.keys(scripts).indexOf(scriptName) === -1) {
-		console.error('missing script: ' + scriptName);
-		process.exit(1);
-	}
-	args = args || [];
-	return new Promise(function(resolve, reject) {
+const runScript = function(scriptName, args) {
+  if (Object.keys(scripts).indexOf(scriptName) === -1) {
+    console.error('missing script: ' + scriptName);
+    process.exit(1);
+  }
+  args = args || [];
+  return new Promise(function(resolve, reject) {
 
-		if (scripts['pre' + scriptName]) {
-			return resolve(runScript('pre' + scriptName));
-		}
+    if (scripts['pre' + scriptName]) {
+      return resolve(runScript('pre' + scriptName));
+    }
 
-		return resolve();
-	}).then(function() {
-		var commands = scripts[scriptName];
-		var promises = [];
+    return resolve();
+  }).then(function() {
+    const commands = scripts[scriptName];
+    const promises = [];
 
-		if (!Array.isArray(commands)) {
-			return commands = runCommand(scriptName, commands, args);
-		}
+    if (!Array.isArray(commands)) {
+      return runCommand(scriptName, commands, args);
+    }
 
-		var i = commands.length;
+    let i = commands.length;
 
-		// find any scripts that will run in parallel. Then run/remove them
-		// ex:
-		// [['test1', 'test2'], [test3]]
-		// test1 will run followed by test 2, and
-		// test 3 will run at the same time as test1 is waiting for test2
-		//
-		// [[test1], [test2], [test3]]
-		// all tests run in parallel
-		//
-		// [test1, test2, test3]
-		// all tests run in sequence
-		while (i--) {
-			var command = commands[i];
+    // find any scripts that will run in parallel. Then run/remove them
+    // ex:
+    // [['test1', 'test2'], [test3]]
+    // test1 will run followed by test 2, and
+    // test 3 will run at the same time as test1 is waiting for test2
+    //
+    // [[test1], [test2], [test3]]
+    // all tests run in parallel
+    //
+    // [test1, test2, test3]
+    // all tests run in sequence
+    while (i--) {
+      const command = commands[i];
 
-			if (Array.isArray(command)) {
-				promises.push(Promise.mapSeries(command, function(seriesCommand) {
-					return runCommand(scriptName, seriesCommand);
-				}));
-				commands.splice(i, 1);
-			}
-		}
+      if (Array.isArray(command)) {
+        promises.push(Promise.mapSeries(command, function(seriesCommand) {
+          return runCommand(scriptName, seriesCommand);
+        }));
+        commands.splice(i, 1);
+      }
+    }
 
-		// leftover scripts to run in series
-		// ex:
-		// [['test1', 'test2'], test3, test4]
-		// the first array ['test1, 'test2'] will be removed above
-		// so we will run test3 then test 4 here
-		promises.push(Promise.mapSeries(commands, function(seriesCommand) {
-			return runCommand(scriptName, seriesCommand);
-		}));
+    // leftover scripts to run in series
+    // ex:
+    // [['test1', 'test2'], test3, test4]
+    // the first array ['test1, 'test2'] will be removed above
+    // so we will run test3 then test 4 here
+    promises.push(Promise.mapSeries(commands, function(seriesCommand) {
+      return runCommand(scriptName, seriesCommand);
+    }));
 
-		// well all scripts are done, move on to post
-		return Promise.all(promises)
-	}).then(function() {
-		if (scripts['post' + scriptName]) {
-			return runScript('post' + scriptName);
-		}
-		return Promise.resolve();
-	});
+    // well all scripts are done, move on to post
+    return Promise.all(promises);
+  }).then(function() {
+    if (scripts['post' + scriptName]) {
+      return runScript('post' + scriptName);
+    }
+    return Promise.resolve();
+  });
 };
 
 module.exports = runScript;

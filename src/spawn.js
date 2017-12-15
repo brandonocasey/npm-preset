@@ -1,7 +1,7 @@
-var config = require('./config');
-var shellQuote = require('shell-quote');
-var npmRun = require('npm-run');
-var Promise = require('bluebird');
+const config = require('./config');
+const shellQuote = require('shell-quote');
+const npmRun = require('npm-run');
+const Promise = require('bluebird');
 
 /**
  * Run a command on the terminal and attatch that command
@@ -14,16 +14,17 @@ var Promise = require('bluebird');
  * @returns {Promise}
  *          A promise that is resolved when the command exits
  */
-var spawn = function(command) {
+const spawn = function(command) {
   process.setMaxListeners(1000);
 
   return new Promise(function(resolve, reject) {
-    var args = command;
+    let args = command;
+
     if (!Array.isArray(command)) {
       args = shellQuote.parse(command);
     }
-    var bin = args.shift();
-    var child = npmRun.spawn(bin, args, {cwd: config.root, env: {FORCE_COLOR: true}});
+    const bin = args.shift();
+    let child = npmRun.spawn(bin, args, {cwd: config.root, env: {FORCE_COLOR: true}});
 
     child.stdout.on('data', function(chunk) {
       process.stdout.write(chunk);

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
+/* eslint-disable max-len */
 
 const config = require('./config');
 const runScript = require('./run-script');

@@ -1,7 +1,6 @@
 # Must do
-* command line args for npms and a help menu
 * unit tests
+* support build:* with regex /^build:[^:]*$/g
 
 ## Stretch Goals:
 * logging/colors (emulate npm?)
-* should we emulate npm-run-all?

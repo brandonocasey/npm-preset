@@ -33,7 +33,6 @@
     ]
   },
   "devDependencies": {
-    "nexe": "^2.0.0-rc.22",
     "ava": "^0.24.0",
     "babel-register": "^6.26.0"
   }

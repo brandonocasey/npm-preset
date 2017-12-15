@@ -1,5 +1,5 @@
-var config = require('./config');
-var path = require('path');
+const config = require('./config');
+const path = require('path');
 
 /**
  * shorten npm-script paths so that we dont print
@@ -11,25 +11,25 @@ var path = require('path');
  * @return {string}
  *         The shortened string
  */
-var shorten = function(str) {
-	if (!str) {
-		return str;
-	}
+const shorten = function(str) {
+  if (!str) {
+    return str;
+  }
 
-	if (str && str.toString) {
-		str = str.toString();
-	}
-	str = str
-		.replace(new RegExp(config.root + path.sep, 'g'), '')
-		.replace(new RegExp(config.root, 'g'), '')
-		.replace(new RegExp(path.join(__dirname, '..'), 'g'), '<npms>');
+  if (str && str.toString) {
+    str = str.toString();
+  }
+  str = str
+    .replace(new RegExp(config.root + path.sep, 'g'), '')
+    .replace(new RegExp(config.root, 'g'), '')
+    .replace(new RegExp(path.join(__dirname, '..'), 'g'), '<npms>');
 
-	(config.npmScript.presets || []).forEach(function(presetName) {
-		str = str
-			.replace(new RegExp('<npms>-preset-' + presetName, 'g'), '<npms-' + presetName + '>');
-	});
+  (config.npmScript.presets || []).forEach(function(presetName) {
+    str = str
+      .replace(new RegExp('<npms>-preset-' + presetName, 'g'), '<npms-' + presetName + '>');
+  });
 
-	return str;
+  return str;
 };
 
 module.exports = shorten;

@@ -8,6 +8,7 @@ const shorten = require('./shorten');
 const yargs = require('yargs');
 const intercept = require('intercept-stdout');
 const Promise = require('bluebird');
+const scriptMatches = require('./script-matches');
 
 const index = process.argv.indexOf('--');
 let subArgs = [];
@@ -58,11 +59,15 @@ if (!config.pkg.scripts || !Object.keys(config.pkg.scripts).length) {
 const promises = [];
 
 argv.parallel.forEach(function(scriptName) {
-  promises.push(runScript(scriptName, subArgs));
+  const scripts = scriptMatches(scriptName);
+
+  scripts.forEach((s) => promises.push(runScript(s, subArgs)));
 });
 
 promises.push(Promise.mapSeries(argv.series, function(scriptName) {
-  return runScript(scriptName, subArgs);
+  const scripts = scriptMatches(scriptName);
+
+  return Promise.mapSeries(scripts, (s) => runScript(s, subArgs));
 }));
 
 Promise.all(promises).then(function() {

@@ -19,6 +19,7 @@ if (index !== -1) {
 }
 
 const argv = yargs
+  .usage('$0 [scripts] [options]')
   .option('version', {alias: 'V', default: false, describe: 'print the version and exit'})
   .option('list', {alias: 'l', default: false, describe: 'print available npms scripts and exit'})
   .option('quiet', {alias: 'q', default: false, describe: 'only output errors and warnings'})
@@ -53,6 +54,11 @@ if (argv.list) {
 
 if (!config.pkg.scripts || !Object.keys(config.pkg.scripts).length) {
   console.error('There are no npm scripts to run, please add some!');
+  process.exit(1);
+}
+
+if (!argv.parallel.length && !argv.series.length) {
+  console.error('Must specify a script to run with -s, -p, or without an arg');
   process.exit(1);
 }
 

@@ -56,18 +56,44 @@ const config = {
   npmScript: appPkg['npm-script'] || {}
 };
 
-(config.npmScript.presets || []).forEach(function(presetName) {
-  if (!(/^npm-script-preset-/).test(presetName)) {
-    presetName = 'npm-script-preset-' + presetName;
+// if not presets are listed
+// see if we can find any installed presets
+if (!config.npmScript.presets) {
+  const packages = Object.keys(config.pkg.dependencies).concat(Object.keys(config.pkg.devDependencies));
+
+  config.npmScript.presets = packages.filter((packageName) => (/^npm-scirpt-preset-/).test(packageName));
+}
+
+const canRequire = function(pkg) {
+  try {
+    require(pkg);
+    return true;
+  } catch (e) {
+    return false;
   }
+};
 
-  const presetPath = path.join(config.root, 'node_modules', presetName);
-  const presetPkg = require(path.join(presetPath, 'package.json'));
+(config.npmScript.presets || []).forEach(function(presetName) {
+  const nodeModules = path.join(config.root, 'node_modules');
+  let presetPath;
+  let presetPkg = {};
 
-  if (!presetPkg.main) {
-    console.error('Preset ' + presetName + ' does not have a main file!');
+  if (canRequire(path.join(nodeModules, 'npm-script-preset-' + presetName, 'package.json'))) {
+    presetPath = path.join(nodeModules, 'npm-script-preset-' + presetName);
+    presetPkg = require(path.join(presetPath, 'package.json'));
+  } else if (canRequire(path.join(nodeModules, presetName, 'package.json'))) {
+    presetPath = path.join(nodeModules, presetName);
+    presetPkg = require(path.join(presetPath, 'package.json'));
+  } else {
+    console.error('Could not find ' + presetName + ', is it installed?');
     process.exit(1);
   }
+
+  if (!presetPkg.main || !canRequire(path.join(presetPath, presetPkg.main))) {
+    console.error('Preset ' + presetName + ' is missing a main file, or has an invalid main file!');
+    process.exit(1);
+  }
+
   let scripts = require(path.join(presetPath, presetPkg.main));
 
   process.env.PATH += ':' + path.join(presetPath, 'node_modules', '.bin');

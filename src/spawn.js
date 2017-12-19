@@ -2,14 +2,15 @@ const config = require('./config');
 const shellQuote = require('shell-quote');
 const npmRun = require('npm-run');
 const Promise = require('bluebird');
+const jsonConfig = JSON.stringify(config);
 
 /**
  * Run a command on the terminal and attatch that command
  * to our current terminal. The output is also shortened to prevent
  * long absolute paths from leaking into the output.
  *
- * @param {string|Array} command
- *        The command to run in string or array form. Array is preffered
+ * @param {Array} command
+ *        The command to run in an array form.
  *
  * @returns {Promise}
  *          A promise that is resolved when the command exits
@@ -18,13 +19,9 @@ const spawn = function(command) {
   process.setMaxListeners(1000);
 
   return new Promise(function(resolve, reject) {
-    let args = command;
 
-    if (!Array.isArray(command)) {
-      args = shellQuote.parse(command);
-    }
-    const bin = args.shift();
-    let child = npmRun.spawn(bin, args, {cwd: config.root, env: {FORCE_COLOR: true}});
+    const bin = command.shift();
+    let child = npmRun.spawn(bin, command, {cwd: config.root, env: {FORCE_COLOR: true, NPM_SCRIPT_CONFIG: jsonConfig}});
 
     child.stdout.on('data', function(chunk) {
       process.stdout.write(chunk);

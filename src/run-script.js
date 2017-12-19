@@ -25,42 +25,33 @@ const scripts = config.pkg.scripts;
  * @return {Promise}
  *         A promise that is resolved when the script or command that was run finishes
  */
-const runCommand = function(scriptName, c, args) {
+const runCommand = function(scriptName, command, args) {
+  command = shellQuote.parse(command);
+  command = command.map(function(c) {
+    if (typeof c === 'object') {
+      if (c.op === 'glob') {
+        return c.pattern;
+      }
+
+      console.warn(c.op + ' is not yet supported');
+    }
+    return c;
+  });
+  command = command.concat(args);
+
   // mimic npm output
   console.log();
   console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' ' + config.root);
-  console.log('> ' + c);
+  console.log('> ' + command.join(' '));
   console.log();
 
-  c = shellQuote.parse(c);
-
-  if (c[0] === 'npm' && c[1] === 'run') {
-    // remove npm
-    c.splice(0, 1);
-    // remove run
-    c.splice(0, 1);
-
-    let subArgs = [];
-    const subArgStartIndex = c.indexOf('--');
-
-    if (subArgStartIndex !== -1) {
-      // remove --
-      c.splice(subArgStartIndex, 1);
-
-      subArgs = c.splice(subArgStartIndex);
-    }
-
-    const subScript = c.join('');
-
-    return runScript(subScript, subArgs);
+  if (command[0] === 'npm' && command[1] === 'run') {
+    // remove npm run and add npms
+    command.splice(0, 2, 'npms');
   }
 
-  c = c.concat(args);
-  return spawn(c);
+  return spawn(command);
 };
-
-
-
 
 /**
  * Runs an npm script by name
@@ -114,7 +105,7 @@ const runScript = function(scriptName, args) {
 
       if (Array.isArray(command)) {
         promises.push(Promise.mapSeries(command, function(seriesCommand) {
-          return runCommand(scriptName, seriesCommand);
+          return runCommand(scriptName, seriesCommand, args);
         }));
         commands.splice(i, 1);
       }
@@ -126,7 +117,7 @@ const runScript = function(scriptName, args) {
     // the first array ['test1, 'test2'] will be removed above
     // so we will run test3 then test 4 here
     promises.push(Promise.mapSeries(commands, function(seriesCommand) {
-      return runCommand(scriptName, seriesCommand);
+      return runCommand(scriptName, seriesCommand, args);
     }));
 
     // well all scripts are done, move on to post

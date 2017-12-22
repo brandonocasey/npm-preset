@@ -113,12 +113,12 @@ test('--list', (t) => {
   });
 });
 
-test('--noshorten', (t) => {
+test('--no-shorten', (t) => {
   const base = path.join(__dirname, '..', '..');
 
   t.plan(3);
   return t.context.modifyPkg({scripts: {echo: 'echo ' + base}}).then(() => {
-    return promiseSpawn('npms', ['--noshorten', 'echo'], {cwd: t.context.dir}).then((result) => {
+    return promiseSpawn('npms', ['--no-shorten', 'echo'], {cwd: t.context.dir}).then((result) => {
       t.true(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
       t.false(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
       t.is(result.stderr.trim().length, 0, 'no stderr');

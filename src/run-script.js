@@ -75,62 +75,20 @@ const runCommand = function(scriptName, command, args) {
  *         A promise that is resolved/rejected when the script pre-scripts, and
  *         post scripts have been run or errored.
  */
-const runScript = function(scriptName, args) {
+const runScript = function(scriptName, args = []) {
   if (Object.keys(scripts).indexOf(scriptName) === -1) {
     console.error('missing script: ' + scriptName);
     process.exit(1);
   }
-  args = args || [];
-  return new Promise(function(resolve, reject) {
 
+  return new Promise(function(resolve, reject) {
     if (scripts['pre' + scriptName]) {
       return resolve(runScript('pre' + scriptName));
     }
 
     return resolve();
   }).then(function() {
-    const commands = scripts[scriptName];
-    const promises = [];
-
-    if (!Array.isArray(commands)) {
-      return runCommand(scriptName, commands, args);
-    }
-
-    let i = commands.length;
-
-    // find any scripts that will run in parallel. Then run/remove them
-    // ex:
-    // [['test1', 'test2'], [test3]]
-    // test1 will run followed by test 2, and
-    // test 3 will run at the same time as test1 is waiting for test2
-    //
-    // [[test1], [test2], [test3]]
-    // all tests run in parallel
-    //
-    // [test1, test2, test3]
-    // all tests run in sequence
-    while (i--) {
-      const command = commands[i];
-
-      if (Array.isArray(command)) {
-        promises.push(Promise.mapSeries(command, function(seriesCommand) {
-          return runCommand(scriptName, seriesCommand, args);
-        }));
-        commands.splice(i, 1);
-      }
-    }
-
-    // leftover scripts to run in series
-    // ex:
-    // [['test1', 'test2'], test3, test4]
-    // the first array ['test1, 'test2'] will be removed above
-    // so we will run test3 then test 4 here
-    promises.push(Promise.mapSeries(commands, function(seriesCommand) {
-      return runCommand(scriptName, seriesCommand, args);
-    }));
-
-    // well all scripts are done, move on to post
-    return Promise.all(promises);
+    return runCommand(scriptName, scripts[scriptName], args);
   }).then(function() {
     if (scripts['post' + scriptName]) {
       return runScript('post' + scriptName);

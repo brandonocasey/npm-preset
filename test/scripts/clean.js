@@ -1,9 +1,22 @@
 var shelljs = require('shelljs');
 var path = require('path');
+var fs = require('fs');
 
-var npmPresetDir = path.join(__dirname, '..', '..');
-var testPkgDir = path.join(npmPresetDir, 'test', 'fixtures', 'test-pkg-main');
+var baseDir = path.join(__dirname, '..', '..');
+var testPkgDir = path.join(baseDir, 'test', 'fixtures', 'test-pkg-main');
 
-shelljs.rm(path.join(testPkgDir, 'node_modules', 'test-pkg-two'));
-shelljs.rm(path.join(testPkgDir, 'node_modules', 'npm-script-preset-videojs'));
-shelljs.rm(path.join(testPkgDir, 'node_modules'));
+shelljs.rm('-rf', testPkgDir);
+shelljs.mkdir('-p', testPkgDir);
+
+fs.writeFileSync(path.join(testPkgDir, 'package.json'), JSON.stringify({
+  name: 'test-pkg-main',
+  version: '1.0.0',
+  description: '',
+  main: 'index.js',
+  scripts: {
+    test: 'echo \"Error: no test specified\" && exit 1'
+  },
+  keywords: [],
+  author: '',
+  license: 'ISC'
+}, null, 2));

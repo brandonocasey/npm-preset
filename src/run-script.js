@@ -32,6 +32,13 @@ const runCommand = function(scriptName, command, args) {
       if (c.op === 'glob') {
         return c.pattern;
       }
+      if (c.op === ';') {
+        return ';';
+      }
+
+      if (c.op === '&&') {
+        return '&&';
+      }
 
       console.warn(c.op + ' is not yet supported');
     }
@@ -40,10 +47,12 @@ const runCommand = function(scriptName, command, args) {
   command = command.concat(args);
 
   // mimic npm output
-  console.log();
-  console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' ' + config.root);
-  console.log('> ' + command.join(' '));
-  console.log();
+  if (!process.env || !process.env.NPM_SCRIPT_COMMANDS_ONLY) {
+    console.log();
+    console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' ' + config.root);
+    console.log('> ' + command.join(' '));
+    console.log();
+  }
 
   if (command[0] === 'npm' && command[1] === 'run') {
     // remove npm run and add npms

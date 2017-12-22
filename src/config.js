@@ -59,7 +59,7 @@ const config = {
 // if not presets are listed
 // see if we can find any installed presets
 if (!config.npmScript.presets) {
-  const packages = Object.keys(config.pkg.dependencies).concat(Object.keys(config.pkg.devDependencies));
+  const packages = Object.keys(config.pkg.dependencies || {}).concat(Object.keys(config.pkg.devDependencies || {}));
 
   config.npmScript.presets = packages.filter((packageName) => (/^npm-scirpt-preset-/).test(packageName));
 }

@@ -5,11 +5,9 @@ import fs from 'fs';
 import shelljs from 'shelljs';
 import npmRun from 'npm-run';
 import Promise from 'bluebird';
-import chokidar from 'chokidar';
 
-const fixtureDir = path.join(__dirname, '..', 'fixtures');
-const npmPresetDir = path.join(__dirname, '..', '..');
-const testPkgDir = path.join(fixtureDir, 'test-pkg-main');
+const fixtureDir = path.join(__dirname, '..', 'fixtures', 'test-pkg-main');
+const baseDir = path.join(__dirname, '..', '..');
 
 const promiseSpawn = function(bin, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -51,296 +49,340 @@ const exists = function(filepath) {
 };
 
 test.before((t) => {
-  return promiseSpawn('node', [path.join(npmPresetDir, 'test', 'scripts', 'clean.js')]).then(() => {
-    return promiseSpawn('node', [path.join(npmPresetDir, 'test', 'scripts', 'setup.js')]);
+  return promiseSpawn('node', [path.join(baseDir, 'test', 'scripts', 'clean.js')]).then(() => {
+    return promiseSpawn('node', [path.join(baseDir, 'test', 'scripts', 'setup.js')]);
   });
 });
 
 test.after.always((t) => {
-  return promiseSpawn('node', [path.join(npmPresetDir, 'test', 'scripts', 'clean.js')]);
+  return promiseSpawn('node', [path.join(baseDir, 'test', 'scripts', 'clean.js')]);
 });
 
 test.beforeEach((t) => {
   const tempdir = path.join(shelljs.tempdir(), uuid.v4());
 
   t.context.dir = tempdir;
+  t.context.modifyPkg = (newPkg) => {
+    return new Promise((resolve, reject) => {
+      const pkgPath = path.join(tempdir, 'package.json');
+      const oldPkg = require(pkgPath);
 
-  return promiseSpawn('cp', ['-R', testPkgDir + path.sep, tempdir], {});
+      resolve(fs.writeFileSync(pkgPath, JSON.stringify(Object.assign(oldPkg, newPkg))));
+    });
+  };
+
+  return promiseSpawn('cp', ['-R', fixtureDir + path.sep, tempdir], {});
 });
 
 test.afterEach.always((t) => {
-  if (t.context.timeout) {
-    clearTimeout(t.context.timeout);
-  }
-  if (t.context.watcher) {
-    t.context.watcher.close();
-  }
-
-  if (t.context.child) {
-    t.context.child.kill();
-  }
-
   if (t.context.dir) {
     return promiseSpawn('rm', ['-rf', t.context.dir], {});
   }
 });
 
-test('build:css', (t) => {
-  t.plan(1);
-  return promiseSpawn('npms', ['build:css'], {cwd: t.context.dir}).then(() => {
-    t.true(exists(path.join(t.context.dir, 'dist', 'test-pkg-main.css')), '.css file was built');
+test('--print-config', (t) => {
+  t.plan(3);
+  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return promiseSpawn('npms', ['--print-config', 'touch'], {cwd: t.context.dir}).then((result) => {
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.not(result.stdout.trim(), 0, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
   });
 });
 
-test('build:js', (t) => {
+test('--version', (t) => {
+  t.plan(3);
+  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return promiseSpawn('npms', ['--version', 'touch'], {cwd: t.context.dir}).then((result) => {
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.not(result.stdout.trim(), 0, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('--list', (t) => {
+  t.plan(3);
+  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return promiseSpawn('npms', ['--list', 'touch'], {cwd: t.context.dir}).then((result) => {
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.is(result.stdout.trim(), '"touch": "touch ./file.test"', 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('--noshorten', (t) => {
+  const base = path.join(__dirname, '..', '..');
+
+  t.plan(3);
+  return t.context.modifyPkg({scripts: {echo: 'echo ' + base}}).then(() => {
+    return promiseSpawn('npms', ['--noshorten', 'echo'], {cwd: t.context.dir}).then((result) => {
+      t.true(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+      t.false(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('should shorten paths by default', (t) => {
+  const base = path.join(__dirname, '..', '..');
+
+  t.plan(3);
+  return t.context.modifyPkg({scripts: {echo: 'echo ' + base }}).then(() => {
+    return promiseSpawn('npms', ['echo'], {cwd: t.context.dir}).then((result) => {
+      t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+      t.true(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('--quiet', (t) => {
+  t.plan(3);
+  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return promiseSpawn('npms', ['--quiet', 'touch'], {cwd: t.context.dir}).then((result) => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.is(result.stdout.trim().length, 0, 'no stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('--commands-only', (t) => {
+  t.plan(2);
+  return t.context.modifyPkg({scripts: {touch: 'echo 1'}}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'touch'], {cwd: t.context.dir}).then((result) => {
+      t.is(result.stdout.trim(), '1', 'stdout of 1');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('serial: single', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return promiseSpawn('npms', ['touch'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+    });
+  });
+});
+
+test('serial: double', (t) => {
+  t.plan(2);
+  return t.context.modifyPkg({scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}).then(() => {
+    return promiseSpawn('npms', ['touch', 'touch2'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    });
+  });
+});
+
+test('serial: *', (t) => {
   t.plan(4);
-  return promiseSpawn('npms', ['build:js'], {cwd: t.context.dir}).then(() => {
-    t.true(exists(path.join(t.context.dir, 'dist', 'test-pkg-main.js')), '.js file was built');
-    t.true(exists(path.join(t.context.dir, 'dist', 'test-pkg-main.min.js')), '.min.js file was built');
-    t.true(exists(path.join(t.context.dir, 'dist', 'test-pkg-main.es.js')), '.es.js file was built');
-    t.true(exists(path.join(t.context.dir, 'dist', 'test-pkg-main.cjs.js')), '.cjs.js file was built');
+  return t.context.modifyPkg({scripts: {
+    'touch:one': 'touch file.test',
+    'touch:two': 'touch file2.test',
+    'touch': 'touch file3.test',
+    'touch:one:two': 'touch file4.test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['touch:*'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+      t.false(exists(path.join(t.context.dir, 'file3.test')), 'file was not created');
+      t.false(exists(path.join(t.context.dir, 'file4.test')), 'file was not created');
+    });
   });
 });
 
-test('build:test', (t) => {
+test('parallel: single', (t) => {
   t.plan(1);
-  return promiseSpawn('npms', ['build:test'], {cwd: t.context.dir}).then(() => {
-    t.true(exists(path.join(t.context.dir, 'test', 'dist', 'bundle.js')), 'test bundle was built');
+  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return promiseSpawn('npms', ['-p', 'touch'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+    });
   });
 });
 
-test('build:lang', (t) => {
-  t.plan(1);
-  return promiseSpawn('npms', ['build:lang'], {cwd: t.context.dir}).then(() => {
-    t.true(exists(path.join(t.context.dir, 'dist', 'lang')), 'lang folder exists');
-  });
-});
-
-test('docs', (t) => {
-  t.plan(1);
-  return promiseSpawn('npms', ['docs'], {cwd: t.context.dir}).then(() => {
-    t.true(exists(path.join(t.context.dir, 'docs', 'api', 'index.html')), 'api docs built');
-  });
-});
-
-test('lint', (t) => {
+test('parallel: double', (t) => {
   t.plan(2);
-  return promiseSpawn('npms', ['lint'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
-    t.not(result.exitCode, 0, 'did not succeed');
-    t.true(result.stdout.length > 0, 'printed to stdout');
+  return t.context.modifyPkg({scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}).then(() => {
+    return promiseSpawn('npms', ['-p', 'touch', 'touch2'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    });
   });
 });
 
-test('clean', (t) => {
-  t.plan(6);
-
-  t.false(exists(path.join(t.context.dir, 'dist')), 'dist folder does not exist');
-  t.false(exists(path.join(t.context.dir, 'test', 'dist')), 'test/dist folder does not exist');
-
-  // does not die when there is nothing to clean
-  return promiseSpawn('npms', ['clean'], {cwd: t.context.dir}).then(() => {
-    t.false(exists(path.join(t.context.dir, 'dist')), 'dist folder does not exist');
-    t.false(exists(path.join(t.context.dir, 'test', 'dist')), 'test/dist folder does not exist');
-
-    shelljs.mkdir('-p', path.join(t.context.dir, 'test', 'dist'));
-    shelljs.mkdir('-p', path.join(t.context.dir, 'dist'));
-    return promiseSpawn('npms', ['clean'], {cwd: t.context.dir});
-  }).then(() => {
-    // cleans
-    t.false(exists(path.join(t.context.dir, 'dist')), 'dist folder does not exist');
-    t.false(exists(path.join(t.context.dir, 'test', 'dist')), 'test/dist folder does not exist');
-  });
-});
-
-test('mkdir', (t) => {
-  t.plan(6);
-
-  t.false(exists(path.join(t.context.dir, 'dist')), 'dist folder does not exist');
-  t.false(exists(path.join(t.context.dir, 'test', 'dist')), 'test/dist folder does not exist');
-
-  return promiseSpawn('npms', ['mkdir'], {cwd: t.context.dir}).then(() => {
-    t.true(exists(path.join(t.context.dir, 'dist')), 'dist folder does not exist');
-    t.true(exists(path.join(t.context.dir, 'test', 'dist')), 'test/dist folder does not exist');
-    return promiseSpawn('npms', ['mkdir'], {cwd: t.context.dir});
-  }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'dist')), 'dist folder does not exist');
-    t.true(exists(path.join(t.context.dir, 'test', 'dist')), 'test/dist folder does not exist');
-  });
-});
-
-test.cb('watch:js-modules', (t) => {
-  const adds = [];
-  const changes = [];
-
+test('parallel: *', (t) => {
   t.plan(4);
-
-  shelljs.mkdir('-p', path.join(t.context.dir, 'dist'));
-  t.context.watcher = chokidar.watch(path.join(t.context.dir, 'dist', '*'))
-    .on('add', (e) => {
-      t.log(e);
-      adds.push(e);
-
-      if (adds.length === 2) {
-        t.not(adds.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.es.js')), -1, 'es file created');
-        t.not(adds.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.cjs.js')), -1, 'cjs file created');
-
-        fs.appendFileSync(path.join(t.context.dir, 'src', 'plugin.js'), ' ');
-      }
-    })
-    .on('addDir', (e) => t.fail(`a dir ${e} was created unexpectedly`))
-    .on('change', (e) => {
-      t.log(e);
-      changes.push(e);
-
-      if (changes.length === 2) {
-        t.not(changes.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.es.js')), -1, 'es file changed');
-        t.not(changes.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.cjs.js')), -1, 'cjs file changed');
-        t.end();
-      }
-    })
-    .on('unlink', (e) => t.fail(`a file ${e} was deleted unexpectedly`))
-    .on('unlinkDir', (e) => t.fail(`a dir ${e} was deleted unexpectedly`));
-
-  t.context.child = npmRun.spawn('npms', ['watch:js-modules'], {cwd: t.context.dir});
-
-  t.context.child.on('close', (exitCode) => {
-    t.fail('watcher died');
-    t.end();
+  return t.context.modifyPkg({scripts: {
+    'touch:one': 'touch file.test',
+    'touch:two': 'touch file2.test',
+    'touch': 'touch file3.test',
+    'touch:one:two': 'touch file4.test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['-p', 'touch:*'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+      t.false(exists(path.join(t.context.dir, 'file3.test')), 'file was not created');
+      t.false(exists(path.join(t.context.dir, 'file4.test')), 'file was not created');
+    });
   });
-
-  t.context.timeout = setTimeout(() => {
-    t.fail('timeout');
-    t.end();
-  }, 5000);
 });
 
-test.cb('watch:js-umd', (t) => {
-  const adds = [];
-  const changes = [];
-
+test('serial and parallel: single', (t) => {
   t.plan(2);
-
-  shelljs.mkdir('-p', path.join(t.context.dir, 'dist'));
-  t.context.watcher = chokidar.watch(path.join(t.context.dir, 'dist', '*'))
-    .on('add', (e) => {
-      t.log(e);
-      adds.push(e);
-
-      if (adds.length === 1) {
-        t.not(adds.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.js')), -1, 'js file created');
-        fs.appendFileSync(path.join(t.context.dir, 'src', 'plugin.js'), ' ');
-      }
-    })
-    .on('addDir', (e) => t.fail(`a dir ${e} was created unexpectedly`))
-    .on('change', (e) => {
-      t.log(e);
-      changes.push(e);
-
-      if (changes.length === 1) {
-        t.not(changes.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.js')), -1, 'js file changed');
-        t.end();
-      }
-    })
-    .on('unlink', (e) => t.fail(`a file ${e} was deleted unexpectedly`))
-    .on('unlinkDir', (e) => t.fail(`a dir ${e} was deleted unexpectedly`));
-
-  t.context.child = npmRun.spawn('npms', ['watch:js-umd'], {cwd: t.context.dir});
-
-  t.context.child.on('close', (exitCode) => {
-    t.fail('watcher died');
-    t.end();
+  return t.context.modifyPkg({scripts: {
+    touch: 'touch ./file.test',
+    touch2: 'touch ./file2.test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['touch', '-p', 'touch2'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    });
   });
-
-  t.context.timeout = setTimeout(() => {
-    t.fail('timeout');
-    t.end();
-  }, 5000);
 });
 
-test.cb('watch:test', (t) => {
-  const adds = [];
-  const changes = [];
+test('serial and parallel: double', (t) => {
+  t.plan(4);
+  return t.context.modifyPkg({scripts: {
+    touch: 'touch ./file.test',
+    touch2: 'touch ./file2.test',
+    touch3: 'touch ./file3.test',
+    touch4: 'touch ./file4.test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['touch', 'touch2', '-p', 'touch3', 'touch4'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file3.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file4.test')), 'file was created');
+    });
+  });
+});
 
+test('serial and parallel: *', (t) => {
+  t.plan(8);
+  return t.context.modifyPkg({scripts: {
+    'serial:one': 'touch ./file.test',
+    'serial:two': 'touch ./file2.test',
+    'parallel:one': 'touch ./file3.test',
+    'parallel:two': 'touch ./file4.test',
+    // there should not be run
+    'parallel:one:one': 'touch ./file5.test',
+    'parallel': 'touch ./file6.test',
+    'serial:one:one': 'touch ./file7.test',
+    'serial': 'touch ./file8.test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['-s', 'serial:*', '-p', 'parallel:*'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file3.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file4.test')), 'file was created');
+
+      t.false(exists(path.join(t.context.dir, 'file5.test')), 'file was created');
+      t.false(exists(path.join(t.context.dir, 'file6.test')), 'file was created');
+      t.false(exists(path.join(t.context.dir, 'file7.test')), 'file was created');
+      t.false(exists(path.join(t.context.dir, 'file8.test')), 'file was created');
+    });
+  });
+});
+
+test('serial: nested', (t) => {
   t.plan(2);
-
-  shelljs.mkdir('-p', path.join(t.context.dir, 'test', 'dist'));
-  t.context.watcher = chokidar.watch(path.join(t.context.dir, 'test', 'dist', '*'))
-    .on('add', (e) => {
-      t.log(e);
-      adds.push(e);
-
-      if (adds.length === 1) {
-        t.not(adds.indexOf(path.join(t.context.dir, 'test', 'dist', 'bundle.js')), -1, 'js file created');
-        fs.appendFileSync(path.join(t.context.dir, 'src', 'plugin.js'), ' ');
-      }
-    })
-    .on('addDir', (e) => t.fail(`a dir ${e} was created unexpectedly`))
-    .on('change', (e) => {
-      t.log(e);
-      changes.push(e);
-
-      if (changes.length === 1) {
-        t.not(changes.indexOf(path.join(t.context.dir, 'test', 'dist', 'bundle.js')), -1, 'js file changed');
-        t.end();
-      }
-    })
-    .on('unlink', (e) => t.fail(`a file ${e} was deleted unexpectedly`))
-    .on('unlinkDir', (e) => t.fail(`a dir ${e} was deleted unexpectedly`));
-
-  t.context.child = npmRun.spawn('npms', ['watch:test'], {cwd: t.context.dir});
-
-  t.context.child.on('close', (exitCode) => {
-    t.fail('watcher died');
-    t.end();
+  return t.context.modifyPkg({scripts: {
+    'serial': 'npms serial:*',
+    'serial:one': 'touch ./file.test',
+    'serial:two': 'touch ./file2.test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['serial'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    });
   });
-
-  t.context.timeout = setTimeout(() => {
-    t.fail('timeout');
-    t.end();
-  }, 5000);
-
 });
 
-test.cb('watch:css', (t) => {
-  const adds = [];
-  const changes = [];
-
+test('parallel: nested', (t) => {
   t.plan(2);
-
-  shelljs.mkdir('-p', path.join(t.context.dir, 'dist'));
-  t.context.watcher = chokidar.watch(path.join(t.context.dir, 'dist', '*'))
-    .on('add', (e) => {
-      t.log(e);
-      adds.push(e);
-
-      if (adds.length === 1) {
-        t.not(adds.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.css')), -1, 'css file created');
-        fs.appendFileSync(path.join(t.context.dir, 'src', 'plugin.scss'), ' ');
-      }
-    })
-    .on('addDir', (e) => t.fail(`a dir ${e} was created unexpectedly`))
-    .on('change', (e) => {
-      t.log(e);
-      changes.push(e);
-
-      if (changes.length === 1) {
-        t.not(changes.indexOf(path.join(t.context.dir, 'dist', 'test-pkg-main.css')), -1, 'css file changed');
-        t.end();
-      }
-    })
-    .on('unlink', (e) => t.fail(`a file ${e} was deleted unexpectedly`))
-    .on('unlinkDir', (e) => t.fail(`a dir ${e} was deleted unexpectedly`));
-
-  t.context.child = npmRun.spawn('npms', ['watch:css'], {cwd: t.context.dir});
-
-  t.context.child.on('close', (exitCode) => {
-    t.fail('watcher died');
-    t.end();
+  return t.context.modifyPkg({scripts: {
+    'parallel': 'npms -p parallel:*',
+    'parallel:one': 'touch ./file.test',
+    'parallel:two': 'touch ./file2.test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['parallel'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+      t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    });
   });
+});
 
-  t.context.timeout = setTimeout(() => {
-    t.fail('timeout');
-    t.end();
-  }, 5000);
+test('verify serial default', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({scripts: {
+    'test:one': 'echo 1',
+    'test:two': 'echo 2',
+    'test:three': 'echo 3',
+    'test:four': 'echo 4',
+    'test:five': 'echo 5',
+    'test:six': 'echo 6',
+    'test:seven': 'echo 7',
+    'test:eight': 'echo 8'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'test:*'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['1', '2', '3', '4', '5', '6', '7', '8'], 'serial order');
+    });
+  });
+});
+
+test('verify serial default', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({scripts: {
+    'test:one': 'echo 1',
+    'test:two': 'echo 2',
+    'test:three': 'echo 3',
+    'test:four': 'echo 4',
+    'test:five': 'echo 5',
+    'test:six': 'echo 6',
+    'test:seven': 'echo 7',
+    'test:eight': 'echo 8'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-s', 'test:*'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['1', '2', '3', '4', '5', '6', '7', '8'], 'serial order');
+    });
+  });
+});
+
+/*
+test('verify parallel', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({scripts: {
+    'test:one': 'sleep 1 && echo 1',
+    'test:two': 'sleep 1 && echo 2',
+    'test:three': 'sleep 1 && echo 3',
+    'test:four': 'sleep 1 && echo 4',
+    'test:five': 'sleep 1 && echo 5',
+    'test:six': 'sleep 1 && echo 6',
+    'test:seven': 'sleep 1 && echo 7',
+    'test:eight': 'sleep 1 && echo 8'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'test:one', 'test:two', 'test:three'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+      console.log(stdouts);
+
+      t.notDeepEqual(stdouts, ['1', '2', '3', '4', '5', '6', '7', '8'], 'non serial order');
+    });
+  });
+});
+
+test('verify parallel', (t) => {
 
 });
+
+test('verify both', (t) => {
+
+});*/

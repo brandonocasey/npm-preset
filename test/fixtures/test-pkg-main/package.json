@@ -2,58 +2,11 @@
   "name": "test-pkg-main",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/test-pkg-main.cjs.js",
-  "module": "dist/test-pkg-main.es.js",
-  "author": "Brandon 'Casey <someemail@lol.com> (http://foo.bar.com)",
-  "license": "MIT",
+  "main": "index.js",
   "scripts": {
-    "build": "npms build",
-    "clean": "npms clean",
-    "docs": "npms docs",
-    "lint": "npms lint",
-    "start": "npms start",
-    "test": "npms test",
-    "version": "npms version",
-    "watch": "npms watch",
-    "prepublishOnly": "npms build",
-    "prepush": "npms lint",
-    "precommit": "npms precommit"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "videojs",
-    "videojs-plugin"
-  ],
-  "vjsstandard": {
-    "ignore": [
-      "dist",
-      "docs",
-      "test/dist"
-    ]
-  },
-  "files": [
-    "CONTRIBUTING.md",
-    "dist/",
-    "docs/",
-    "index.html",
-    "scripts/",
-    "src/",
-    "test/"
-  ],
-  "dependencies": {
-    "global": "^4.3.2",
-    "video.js": "^5.19.2"
-  },
-  "devDependencies": {
-    "npm-script": "*",
-    "npm-script-preset-videojs": "*",
-    "es5-shim": "^4.5.9",
-    "husky": "^0.14.3",
-    "qunitjs": "^2.4.1",
-    "sinon": "^2.2.1"
-  },
-  "npm-script": {
-    "presets": [
-      "videojs"
-    ]
-  }
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

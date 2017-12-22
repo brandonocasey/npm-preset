@@ -19,9 +19,13 @@ const spawn = function(command) {
   process.setMaxListeners(1000);
 
   return new Promise(function(resolve, reject) {
+    const env = process.env;
+
+    env.NPM_SCRIPT_CONFIG = jsonConfig;
+    env.FORCE_COLOR = true;
 
     const bin = command.shift();
-    let child = npmRun.spawn(bin, command, {cwd: config.root, env: {FORCE_COLOR: true, NPM_SCRIPT_CONFIG: jsonConfig}});
+    let child = npmRun.spawn(bin, command, {cwd: config.root, env, shell: true});
 
     child.stdout.on('data', function(chunk) {
       process.stdout.write(chunk);
@@ -29,6 +33,10 @@ const spawn = function(command) {
 
     child.stderr.on('data', function(chunk) {
       process.stderr.write(chunk);
+    });
+
+    child.on('error', function(error) {
+      throw error;
     });
 
     process.on('exit', function() {

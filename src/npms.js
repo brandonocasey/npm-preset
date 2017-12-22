@@ -20,26 +20,37 @@ if (index !== -1) {
 
 const argv = yargs
   .usage('$0 [scripts] [options]')
-  .option('version', {alias: 'V', default: false, describe: 'print the version and exit'})
-  .option('list', {alias: 'l', default: false, describe: 'print available npms scripts and exit'})
-  .option('quiet', {alias: 'q', default: false, describe: 'only output errors and warnings'})
-  .option('print-config', {alias: 'pc', default: false, describe: 'print the config and exit'})
+  .option('version', {alias: 'V', default: false, boolean: true, describe: 'print the version and exit'})
+  .option('list', {alias: 'l', default: false, boolean: true, describe: 'print available npms scripts and exit'})
+  .option('quiet', {alias: 'q', default: false, boolean: true, describe: 'only output errors and warnings'})
+  .option('commands-only', {alias: 'co', default: false, boolean: true, describe: 'only show output for commands and errors/warnings'})
+  .option('print-config', {alias: 'pc', default: false, boolean: true, describe: 'print the config and exit'})
   .option('parallel', {alias: 'p', default: [], array: true, describe: 'run scripts in parallel'})
   .option('series', {alias: 's', default: [], array: true, describe: 'run scripts in series'})
-  .option('no-shorten', {alias: 'ns', default: false, describe: 'do not shorten paths'})
+  .option('noshorten', {alias: 'ns', default: false, boolean: true, describe: 'do not shorten paths'})
   .parse(process.argv.splice(2));
 
 // by default commands are run in series
 argv.series = argv.s = argv.series.concat(argv._);
 
-if (!argv.noShorten) {
-  // shorten stdoud and stderr
-  intercept(shorten, shorten);
+let stderrFilter = (s) => s;
+let stdoutFilter = (s) => s;
+
+if (!argv.noshorten) {
+  // shorten stdout and stderr
+  stderrFilter = shorten;
+  stdoutFilter = shorten;
 }
 
 if (argv.quiet) {
-  // intercept stdout, to be nothing
-  intercept((s) => '');
+  // never print stdout
+  stdoutFilter = (s) => '';
+}
+
+intercept(stdoutFilter, stderrFilter);
+
+if (argv.commandsOnly) {
+  process.env.NPM_SCRIPT_COMMANDS_ONLY = true;
 }
 
 if (argv.printConfig) {
@@ -47,14 +58,16 @@ if (argv.printConfig) {
   process.exit(0);
 }
 
-if (argv.list) {
-  console.log(config.pkg.scripts);
-  process.exit(0);
-}
-
 if (!config.pkg.scripts || !Object.keys(config.pkg.scripts).length) {
   console.error('There are no npm scripts to run, please add some!');
   process.exit(1);
+}
+
+if (argv.list) {
+  Object.keys(config.pkg.scripts).forEach(function(k) {
+    console.log('"' + k + '": "' + config.pkg.scripts[k] + '"');
+  });
+  process.exit(0);
 }
 
 if (!argv.parallel.length && !argv.series.length) {

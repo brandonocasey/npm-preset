@@ -54,11 +54,6 @@ const runCommand = function(scriptName, command, args) {
     console.log();
   }
 
-  if (command[0] === 'npm' && command[1] === 'run') {
-    // remove npm run and add npms
-    command.splice(0, 2, 'npms');
-  }
-
   return spawn(command);
 };
 
@@ -87,13 +82,15 @@ const runScript = function(scriptName, args = []) {
     }
 
     return resolve();
-  }).then(function() {
+  }).then(function(result) {
     return runCommand(scriptName, scripts[scriptName], args);
-  }).then(function() {
+  }).then(function(mainResult) {
     if (scripts['post' + scriptName]) {
-      return runScript('post' + scriptName);
+      return runScript('post' + scriptName).then(function() {
+        return Promise.resolve(mainResult);
+      });
     }
-    return Promise.resolve();
+    return Promise.resolve(mainResult);
   });
 };
 

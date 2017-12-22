@@ -1,5 +1,4 @@
 const config = require('./config');
-const shellQuote = require('shell-quote');
 const npmRun = require('npm-run');
 const Promise = require('bluebird');
 const jsonConfig = JSON.stringify(config);
@@ -47,10 +46,7 @@ const spawn = function(command) {
 
     child.on('close', function(exitCode) {
       child = null;
-      if (exitCode !== 0) {
-        process.exit(exitCode);
-      }
-      resolve();
+      resolve({exitCode});
     });
   });
 };

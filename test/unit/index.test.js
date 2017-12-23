@@ -80,48 +80,56 @@ test.afterEach.always((t) => {
   }
 });
 
-test('--print-config', (t) => {
-  t.plan(3);
-  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
-    return promiseSpawn('npms', ['--print-config', 'touch'], {cwd: t.context.dir}).then((result) => {
-      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-      t.not(result.stdout.trim(), 0, 'stdout');
-      t.is(result.stderr.trim().length, 0, 'no stderr');
+['-pc', '--print-config'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(3);
+    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+      return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
+        t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+        t.not(result.stdout.trim(), 0, 'stdout');
+        t.is(result.stderr.trim().length, 0, 'no stderr');
+      });
     });
   });
 });
 
-test('--version', (t) => {
-  t.plan(3);
-  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
-    return promiseSpawn('npms', ['--version', 'touch'], {cwd: t.context.dir}).then((result) => {
-      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-      t.not(result.stdout.trim(), 0, 'stdout');
-      t.is(result.stderr.trim().length, 0, 'no stderr');
+['-V', '--version'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(3);
+    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+      return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
+        t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+        t.not(result.stdout.trim(), 0, 'stdout');
+        t.is(result.stderr.trim().length, 0, 'no stderr');
+      });
     });
   });
 });
 
-test('--list', (t) => {
-  t.plan(3);
-  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
-    return promiseSpawn('npms', ['--list', 'touch'], {cwd: t.context.dir}).then((result) => {
-      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-      t.is(result.stdout.trim(), '"touch": "touch ./file.test"', 'stdout');
-      t.is(result.stderr.trim().length, 0, 'no stderr');
+['-l', '--list'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(3);
+    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+      return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
+        t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+        t.is(result.stdout.trim(), '"touch": "touch ./file.test"', 'stdout');
+        t.is(result.stderr.trim().length, 0, 'no stderr');
+      });
     });
   });
 });
 
-test('--no-shorten', (t) => {
-  const base = path.join(__dirname, '..', '..');
+['-ns', '--no-shorten'].forEach(function(o) {
+  test(o, (t) => {
+    const base = path.join(__dirname, '..', '..');
 
-  t.plan(3);
-  return t.context.modifyPkg({scripts: {echo: 'echo ' + base}}).then(() => {
-    return promiseSpawn('npms', ['--no-shorten', 'echo'], {cwd: t.context.dir}).then((result) => {
-      t.true(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
-      t.false(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
-      t.is(result.stderr.trim().length, 0, 'no stderr');
+    t.plan(3);
+    return t.context.modifyPkg({scripts: {echo: 'echo ' + base}}).then(() => {
+      return promiseSpawn('npms', [o, 'echo'], {cwd: t.context.dir}).then((result) => {
+        t.true(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+        t.false(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
+        t.is(result.stderr.trim().length, 0, 'no stderr');
+      });
     });
   });
 });
@@ -139,23 +147,27 @@ test('should shorten paths by default', (t) => {
   });
 });
 
-test('--quiet', (t) => {
-  t.plan(3);
-  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
-    return promiseSpawn('npms', ['--quiet', 'touch'], {cwd: t.context.dir}).then((result) => {
-      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-      t.is(result.stdout.trim().length, 0, 'no stdout');
-      t.is(result.stderr.trim().length, 0, 'no stderr');
+['-q', '--quiet'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(3);
+    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+      return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
+        t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+        t.is(result.stdout.trim().length, 0, 'no stdout');
+        t.is(result.stderr.trim().length, 0, 'no stderr');
+      });
     });
   });
 });
 
-test('--commands-only', (t) => {
-  t.plan(2);
-  return t.context.modifyPkg({scripts: {touch: 'echo 1'}}).then(() => {
-    return promiseSpawn('npms', ['--commands-only', 'touch'], {cwd: t.context.dir}).then((result) => {
-      t.is(result.stdout.trim(), '1', 'stdout of 1');
-      t.is(result.stderr.trim().length, 0, 'no stderr');
+['-co', '--commands-only'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(2);
+    return t.context.modifyPkg({scripts: {touch: 'echo 1'}}).then(() => {
+      return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
+        t.is(result.stdout.trim(), '1', 'stdout of 1');
+        t.is(result.stderr.trim().length, 0, 'no stderr');
+      });
     });
   });
 });
@@ -341,48 +353,107 @@ test('verify serial default', (t) => {
   t.plan(1);
   return t.context.modifyPkg({scripts: {
     'test:one': 'echo 1',
-    'test:two': 'echo 2',
-    'test:three': 'echo 3',
-    'test:four': 'echo 4',
-    'test:five': 'echo 5',
-    'test:six': 'echo 6',
-    'test:seven': 'echo 7',
-    'test:eight': 'echo 8'
+    'test:two': 'sleep 1 && echo 2',
+    'test:three': 'echo 3'
   }}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-s', 'test:*'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
-      t.deepEqual(stdouts, ['1', '2', '3', '4', '5', '6', '7', '8'], 'serial order');
+      t.deepEqual(stdouts, ['1', '2', '3'], 'serial order');
     });
   });
 });
 
-/*
-test('verify parallel', (t) => {
+test('verify parallel order', (t) => {
+  t.plan(4);
+  return t.context.modifyPkg({scripts: {
+    'test:one': 'echo 1',
+    'test:two': 'sleep 1 && echo 2',
+    'test:three': 'echo 3'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'test:*'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.notDeepEqual(stdouts, ['1', '2', '3'], 'non serial order');
+      t.not(stdouts.indexOf('1'), -1, '1 was printed');
+      t.not(stdouts.indexOf('2'), -1, '2 was printed');
+      t.not(stdouts.indexOf('3'), -1, '3 was printed');
+    });
+  });
+});
+
+test('verify serial & parallel', (t) => {
   t.plan(1);
+
   return t.context.modifyPkg({scripts: {
     'test:one': 'sleep 1 && echo 1',
-    'test:two': 'sleep 1 && echo 2',
-    'test:three': 'sleep 1 && echo 3',
-    'test:four': 'sleep 1 && echo 4',
+    'test:two': 'echo 2',
+    'test:three': 'echo 3',
+    'test:four': 'echo 4',
     'test:five': 'sleep 1 && echo 5',
-    'test:six': 'sleep 1 && echo 6',
-    'test:seven': 'sleep 1 && echo 7',
-    'test:eight': 'sleep 1 && echo 8'
+    'test:six': 'echo 6',
+    'test:seven': 'echo 7',
+    'test:eight': 'echo 8'
   }}).then(() => {
-    return promiseSpawn('npms', ['--commands-only', '-p', 'test:one', 'test:two', 'test:three'], {cwd: t.context.dir}).then((result) => {
+    return promiseSpawn('npms', ['--commands-only',
+      '-p', 'test:one', 'test:two',
+      '-s', 'test:three', 'test:four',
+      '-p', 'test:five', 'test:six',
+      '-s', 'test:seven', 'test:eight'
+    ], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
-      console.log(stdouts);
 
-      t.notDeepEqual(stdouts, ['1', '2', '3', '4', '5', '6', '7', '8'], 'non serial order');
+      t.deepEqual(stdouts, ['2', '1', '3', '4', '6', '5', '7', '8'], 'order is as expected');
     });
   });
 });
 
-test('verify parallel', (t) => {
+test('serial: first exit failure', (t) => {
+  t.plan(1);
 
+  return t.context.modifyPkg({scripts: {
+    one: 'exit 1'
+  }}).then(() => {
+    return promiseSpawn('npms', ['one'], {cwd: t.context.dir}).then((result) => {
+      t.not(result.exitCode, 0, 'fails');
+    });
+  });
 });
 
-test('verify both', (t) => {
+test('serial: second exit failure', (t) => {
+  t.plan(1);
 
-});*/
+  return t.context.modifyPkg({scripts: {
+    one: 'echo test',
+    two: 'exit 1'
+  }}).then(() => {
+    return promiseSpawn('npms', ['one', 'two'], {cwd: t.context.dir}).then((result) => {
+      t.not(result.exitCode, 0, 'fails');
+    });
+  });
+});
+
+test('parallel: first exit failure', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    one: 'exit 1'
+  }}).then(() => {
+    return promiseSpawn('npms', ['-p', 'one'], {cwd: t.context.dir}).then((result) => {
+      t.not(result.exitCode, 0, 'fails');
+    });
+  });
+});
+
+test('parallel: second exit failure', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    one: 'echo test',
+    two: 'exit 1'
+  }}).then(() => {
+    return promiseSpawn('npms', ['-p', 'one', 'two'], {cwd: t.context.dir}).then((result) => {
+      t.not(result.exitCode, 0, 'fails');
+    });
+  });
+});

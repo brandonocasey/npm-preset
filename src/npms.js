@@ -142,31 +142,26 @@ if (cluster.isMaster) {
     console.error('Must specify a script to run with -s, -p, or without an arg');
     process.exit(1);
   }
-  const promises = [];
 
-  options.tasks.forEach(function(task) {
-    let p;
-
+  // run through each task, before going to the next one
+  Promise.each(options.tasks, function(task) {
     if (task.type === 'series') {
-      p = Promise.mapSeries(task.scripts, (s) => runScript(s, options.subArgs));
-    } else {
-      p = Promise.map(task.scripts, (s) => {
-        return new Promise((resolve, reject) => {
-          const worker = cluster.fork({scriptName: s});
+      return Promise.mapSeries(task.scripts, (s) => runScript(s, options.subArgs));
+    }
 
-          worker.on('exit', function(code, signal) {
-            if (code !== 0) {
-              reject();
-            }
-            resolve(code);
-          });
+    return Promise.map(task.scripts, (s) => {
+      return new Promise((resolve, reject) => {
+        const worker = cluster.fork({scriptName: s});
+
+        worker.on('exit', function(code, signal) {
+          if (code !== 0) {
+            reject({exitCode: code});
+          }
+          resolve({exitCode: code});
         });
       });
-    }
-    promises.push(p);
-  });
-
-  Promise.all(promises).then(function() {
+    });
+  }).then(function() {
     process.exit(0);
   }).error(function(error) {
     console.error(error);
@@ -174,7 +169,7 @@ if (cluster.isMaster) {
   });
 } else {
   runScript(process.env.scriptName).then(function(result) {
-    process.exit(result.code);
+    process.exit(result.exitCode);
   });
 }
 

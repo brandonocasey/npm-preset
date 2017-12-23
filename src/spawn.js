@@ -46,7 +46,10 @@ const spawn = function(command) {
 
     child.on('close', function(exitCode) {
       child = null;
-      resolve({exitCode});
+      if (exitCode !== 0) {
+        return reject({exitCode});
+      }
+      return resolve({exitCode});
     });
   });
 };

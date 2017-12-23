@@ -81,16 +81,14 @@ const runScript = function(scriptName, args = []) {
       return resolve(runScript('pre' + scriptName));
     }
 
-    return resolve();
+    return resolve({exitCode: 0});
   }).then(function(result) {
     return runCommand(scriptName, scripts[scriptName], args);
-  }).then(function(mainResult) {
+  }).then(function(result) {
     if (scripts['post' + scriptName]) {
-      return runScript('post' + scriptName).then(function() {
-        return Promise.resolve(mainResult);
-      });
+      return runScript('post' + scriptName);
     }
-    return Promise.resolve(mainResult);
+    return Promise.resolve(result);
   });
 };
 

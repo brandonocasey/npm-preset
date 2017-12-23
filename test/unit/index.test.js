@@ -414,20 +414,21 @@ test('serial: first exit failure', (t) => {
   return t.context.modifyPkg({scripts: {
     one: 'exit 1'
   }}).then(() => {
-    return promiseSpawn('npms', ['one'], {cwd: t.context.dir}).then((result) => {
+    return promiseSpawn('npms', ['one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.not(result.exitCode, 0, 'fails');
     });
   });
 });
 
 test('serial: second exit failure', (t) => {
-  t.plan(1);
+  t.plan(2);
 
   return t.context.modifyPkg({scripts: {
     one: 'echo test',
     two: 'exit 1'
   }}).then(() => {
-    return promiseSpawn('npms', ['one', 'two'], {cwd: t.context.dir}).then((result) => {
+    return promiseSpawn('npms', ['--commands-only', 'one', 'two'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.is(result.stdout.trim(), 'test', 'test is printed');
       t.not(result.exitCode, 0, 'fails');
     });
   });
@@ -439,21 +440,242 @@ test('parallel: first exit failure', (t) => {
   return t.context.modifyPkg({scripts: {
     one: 'exit 1'
   }}).then(() => {
-    return promiseSpawn('npms', ['-p', 'one'], {cwd: t.context.dir}).then((result) => {
+    return promiseSpawn('npms', ['-p', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.not(result.exitCode, 0, 'fails');
     });
   });
 });
 
 test('parallel: second exit failure', (t) => {
-  t.plan(1);
+  t.plan(2);
 
   return t.context.modifyPkg({scripts: {
     one: 'echo test',
     two: 'exit 1'
   }}).then(() => {
-    return promiseSpawn('npms', ['-p', 'one', 'two'], {cwd: t.context.dir}).then((result) => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one', 'two'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.is(result.stdout.trim(), 'test', 'test is printed');
       t.not(result.exitCode, 0, 'fails');
+    });
+  });
+});
+
+test('serial: pre script', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    one: 'echo test',
+    preone: 'echo pre'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['pre', 'test'], 'pre is run before main');
+    });
+  });
+});
+
+test('serial: post script', (t) => {
+
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    one: 'echo test',
+    postone: 'echo post'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['test', 'post'], 'post is after before main');
+    });
+  });
+});
+
+test('serial: pre and post script', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    preone: 'echo pre',
+    one: 'echo test',
+    postone: 'echo post'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['pre', 'test', 'post'], 'pre test and post');
+    });
+  });
+});
+
+test('serial: pre and double pre ', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    preone: 'echo pre',
+    prepreone: 'echo prepre',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['prepre', 'pre', 'test'], 'double pre');
+    });
+  });
+
+});
+
+test('serial: post and double post', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    postpostone: 'echo postpost',
+    postone: 'echo post',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['test', 'post', 'postpost'], 'double post');
+    });
+  });
+});
+
+test('serial: pre failure', (t) => {
+  t.plan(2);
+
+  return t.context.modifyPkg({scripts: {
+    preone: 'exit 1',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.is(result.stdout.trim().length, 0, 'nothing printed');
+      t.not(result.exitCode, 0, 'failed');
+    });
+  });
+});
+
+test('serial: post failure', (t) => {
+  t.plan(2);
+
+  return t.context.modifyPkg({scripts: {
+    postone: 'exit 1',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['test'], 'test printed');
+      t.not(result.exitCode, 0, 'failed');
+    });
+  });
+});
+
+test('parallel: pre script', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    one: 'echo test',
+    preone: 'echo pre'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['pre', 'test'], 'pre is run before main');
+    });
+  });
+});
+
+test('parallel: post script', (t) => {
+
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    one: 'echo test',
+    postone: 'echo post'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['test', 'post'], 'post is after before main');
+    });
+  });
+});
+
+test('parallel: pre and post script', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    preone: 'echo pre',
+    one: 'echo test',
+    postone: 'echo post'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['pre', 'test', 'post'], 'pre test and post');
+    });
+  });
+});
+
+test('parallel: pre and double pre ', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    preone: 'echo pre',
+    prepreone: 'echo prepre',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['prepre', 'pre', 'test'], 'double pre');
+    });
+  });
+
+});
+
+test('parallel: post and double post', (t) => {
+  t.plan(1);
+
+  return t.context.modifyPkg({scripts: {
+    postpostone: 'echo postpost',
+    postone: 'echo post',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['test', 'post', 'postpost'], 'double post');
+    });
+  });
+});
+
+test('parallel: pre failure', (t) => {
+  t.plan(2);
+
+  return t.context.modifyPkg({scripts: {
+    preone: 'exit 1',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.is(result.stdout.trim().length, 0, 'nothing printed');
+      t.not(result.exitCode, 0, 'failed');
+    });
+  });
+});
+
+test('parallel: post failure', (t) => {
+  t.plan(2);
+
+  return t.context.modifyPkg({scripts: {
+    postone: 'exit 1',
+    one: 'echo test'
+  }}).then(() => {
+    return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['test'], 'test printed');
+      t.not(result.exitCode, 0, 'failed');
     });
   });
 });

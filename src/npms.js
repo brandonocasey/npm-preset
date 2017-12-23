@@ -56,25 +56,18 @@ if (cluster.isMaster) {
 
     if ((/^(-h|--help)$/).test(arg)) {
       options.help = true;
-      currentType = 'series';
     } else if ((/^(-q|--quiet)$/).test(arg)) {
       options.quiet = true;
-      currentType = 'series';
     } else if ((/^(-V|--version)$/).test(arg)) {
       options.version = true;
-      currentType = 'series';
     } else if ((/^(-l|--list$)/).test(arg)) {
       options.list = true;
-      currentType = 'series';
     } else if ((/^(--commands-only|-co)$/).test(arg)) {
       options.commandsOnly = true;
-      currentType = 'series';
     } else if ((/^(--print-config|-pc)$/).test(arg)) {
       options.printConfig = true;
-      currentType = 'series';
     } else if ((/^(--no-shorten|-ns)$/).test(arg)) {
       options.shorten = false;
-      currentType = 'series';
     } else if ((/^(--parallel|-p)$/).test(arg)) {
       currentType = 'parallel';
     } else if ((/^(--series|-s)$/).test(arg)) {
@@ -144,7 +137,7 @@ if (cluster.isMaster) {
   }
 
   // run through each task, before going to the next one
-  Promise.each(options.tasks, function(task) {
+  Promise.mapSeries(options.tasks, function(task) {
     if (task.type === 'series') {
       return Promise.mapSeries(task.scripts, (s) => runScript(s, options.subArgs));
     }
@@ -161,14 +154,19 @@ if (cluster.isMaster) {
         });
       });
     });
-  }).then(function() {
-    process.exit(0);
-  }).error(function(error) {
-    console.error(error);
-    process.exit(1);
+  }).then(function(result) {
+    if (result.exitCode !== 0) {
+      process.exit(result.exitCode);
+    }
+  }).catch(function(result) {
+    if (result.exitCode !== 0) {
+      process.exit(result.exitCode);
+    }
   });
 } else {
   runScript(process.env.scriptName).then(function(result) {
+    process.exit(result.exitCode);
+  }).catch(function(result) {
     process.exit(result.exitCode);
   });
 }

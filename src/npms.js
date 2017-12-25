@@ -119,14 +119,14 @@ if (cluster.isMaster) {
     process.exit(0);
   }
 
-  if (!config.pkg.scripts || !Object.keys(config.pkg.scripts).length) {
+  if (!config.scripts || !Object.keys(config.scripts).length) {
     console.error('There are no npm scripts to run, please add some!');
     process.exit(1);
   }
 
   if (options.list) {
-    Object.keys(config.pkg.scripts).forEach(function(k) {
-      console.log('"' + k + '": "' + config.pkg.scripts[k] + '"');
+    Object.keys(config.scripts).forEach(function(k) {
+      console.log('"' + k + '": "' + config.scripts[k] + '"');
     });
     process.exit(0);
   }

@@ -68,7 +68,23 @@ Example: (you would not want to include configuration for the same preset twice,
 ```
 
 ## Writing Presets
+A preset must hav a main file that exports a function or an object. The function accepts the current npm-script config as the only argument and must return an object containing the scripts that you would like to add to the list. The object must contain the scripts that you would like to add.
 
+Things to know:
+* if you need to pass config files during a command you will want to use absolute paths to do so.
+* When a script is run process.env.NPM_SCRIPT_CONFIG will be set to the current `npm-script` config. This should allow you to use any of the special variables from that file just about anywhere (babel config, rollup config, a random npm script)
+
+## The npm-script "config"
+This is not really a config, its more of a useful state object that is passed around. Properties include:
+
+* author: The author string for the current package, this is special because it will break down an author object into a string.
+* root: The absolute root directory of the current package
+* name: The name of the package minus the scope
+* scope: The scope of the package minus the name
+* moduleName: camelCase version of the name, usually used in global exporting on window for the browser
+* pkg: The unmodified app package.
+* npmScript: The final npmScript config, after small modification have been done and `pkg['npm-script']` has been taken into account.
+* scripts: This starts with the scripts from the current package, from there presets are merged into this script list
 
 ## Recommendations
 We recommend that `npm-script` and any presets be locked to a single version and not a version range. We then recommend that `greenkeeper` be enabled so that it can submit prs for to update `npm-script`. This will prevent your build pipeline from changing out from under you and from any break that may be possible.

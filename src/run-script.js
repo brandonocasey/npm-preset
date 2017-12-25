@@ -5,7 +5,7 @@ const spawn = require('./spawn');
 const Promise = require('bluebird');
 const config = require('./config');
 const shellQuote = require('shell-quote');
-const scripts = config.pkg.scripts;
+const scripts = config.scripts;
 
 /**
  * Run a command on the terminal

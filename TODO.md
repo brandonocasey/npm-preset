@@ -1,6 +1,6 @@
 # Must do
-* better script merging
-* writing presets section of readme
+* Test script merging and verify it does what we would expect:
+  * run both scripts if they conflict
 
 ## Stretch Goals:
 * colors (emulate npm?)

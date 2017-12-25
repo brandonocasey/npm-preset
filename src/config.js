@@ -53,6 +53,7 @@ const config = {
   scope,
   root: appRoot,
   pkg: appPkg,
+  scripts: appPkg.scripts || {},
   npmScript: appPkg['npm-script'] || {}
 };
 
@@ -61,7 +62,7 @@ const config = {
 if (!config.npmScript.presets) {
   const packages = Object.keys(config.pkg.dependencies || {}).concat(Object.keys(config.pkg.devDependencies || {}));
 
-  config.npmScript.presets = packages.filter((packageName) => (/^npm-scirpt-preset-/).test(packageName));
+  config.npmScript.presets = packages.filter((packageName) => (/^npm-script-preset-/).test(packageName));
 }
 
 const canRequire = function(pkg) {
@@ -102,7 +103,7 @@ const canRequire = function(pkg) {
     scripts = scripts(config);
   }
 
-  Object.assign(config.pkg.scripts, scripts);
+  Object.assign(config.scripts, scripts);
 });
 
 module.exports = config;

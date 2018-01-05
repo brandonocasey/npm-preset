@@ -84,6 +84,13 @@ if (cluster.isMaster) {
     }
   }
 
+  if (options.printConfig) {
+    delete config.scripts;
+    delete config.pkg;
+    console.log(JSON.stringify(config, null, 2));
+    process.exit(0);
+  }
+
   let stderrFilter = (s) => s;
   let stdoutFilter = (s) => s;
 
@@ -112,11 +119,6 @@ if (cluster.isMaster) {
 
   if (options.commandsOnly) {
     process.env.NPM_SCRIPT_COMMANDS_ONLY = true;
-  }
-
-  if (options.printConfig) {
-    console.log(config);
-    process.exit(0);
   }
 
   if (!config.scripts || !Object.keys(config.scripts).length) {

@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const findRoot = require('find-root');
 const path = require('path');
+const fs = require('fs');
 
 /**
  * The config contains anything that might be needed from the package.json
@@ -65,6 +66,9 @@ if (!config.npmScripts.presets) {
   config.npmScripts.presets = packages.filter((packageName) => (/^npm-scripts-preset-/).test(packageName));
 }
 
+config.npmScripts.presets = config.npmScripts.presets || [];
+config.npmScripts.scripts = config.npmScripts.scripts || {};
+
 const canRequire = function(pkg) {
   try {
     require(pkg);
@@ -79,43 +83,52 @@ const addScript = function(scriptName, obj) {
   config.scripts[scriptName].push(obj);
 };
 
-Object.keys(config.npmScripts.scripts || {}).forEach(function(scriptName) {
+Object.keys(config.npmScripts.scripts).forEach(function(scriptName) {
   addScript(scriptName, {command: config.npmScripts.scripts[scriptName], source: 'npm-scripts'});
 });
 
-(config.npmScripts.presets || []).forEach(function(presetName) {
+config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
+  if (typeof preset === 'string') {
+    preset = {name: preset};
+  }
   const nodeModules = path.join(config.root, 'node_modules');
-  let presetPath;
-  let presetPkg = {};
 
-  if (canRequire(path.join(nodeModules, 'npm-scripts-preset-' + presetName, 'package.json'))) {
-    presetPath = path.join(nodeModules, 'npm-scripts-preset-' + presetName);
-    presetPkg = require(path.join(presetPath, 'package.json'));
-    presetName = 'npm-scripts-preset-' + presetName;
-  } else if (canRequire(path.join(nodeModules, presetName, 'package.json'))) {
-    presetPath = path.join(nodeModules, presetName);
-    presetPkg = require(path.join(presetPath, 'package.json'));
-  } else {
-    console.error('Could not find ' + presetName + ', is it installed?');
+  if (!preset.path && canRequire(path.join(nodeModules, 'npm-scripts-preset-' + preset.name, 'package.json'))) {
+    preset.name = 'npm-scripts-preset-' + preset.name;
+    preset.path = path.join(nodeModules, preset.name);
+  } else if (!preset.path && canRequire(path.join(nodeModules, preset.name, 'package.json'))) {
+    preset.path = path.join(nodeModules, preset.name);
+  }
+
+  if (!canRequire(preset.path)) {
+    console.error('Could not find ' + preset.name + ', is it installed?');
     process.exit(1);
   }
 
-  if (!presetPkg.main || !canRequire(path.join(presetPath, presetPkg.main))) {
-    console.error('Preset ' + presetName + ' is missing a main file, or has an invalid main file!');
+  const presetPkg = require(path.join(preset.path, 'package.json'));
+
+  if (!presetPkg.main || !canRequire(path.join(preset.path, presetPkg.main))) {
+    console.error('Preset ' + preset.name + ' is missing a main file, or has an invalid main file!');
     process.exit(1);
   }
 
-  let scripts = require(path.join(presetPath, presetPkg.main));
+  let scripts = require(path.join(preset.path, presetPkg.main));
 
-  process.env.PATH += ':' + path.join(presetPath, 'node_modules', '.bin');
+  process.env.PATH += ':' + path.join(preset.path, 'node_modules', '.bin');
 
   if (typeof scripts === 'function') {
     scripts = scripts(config);
   }
 
   Object.keys(scripts).forEach(function(scriptName) {
-    addScript(scriptName, {command: scripts[scriptName], source: presetName});
+    addScript(scriptName, {command: scripts[scriptName], source: preset.name});
   });
+
+  preset.shortname = preset.name.replace(/^npm-scripts-preset-/, '');
+  preset.realpath = fs.realpathSync(preset.path);
+  preset.localpath = path.relative(config.root, preset.path);
+
+  return preset;
 });
 
 module.exports = config;

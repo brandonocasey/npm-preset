@@ -19,16 +19,19 @@ const shorten = function(str) {
   if (str && str.toString) {
     str = str.toString();
   }
+
   str = str
     .replace(new RegExp(config.root + path.sep, 'g'), '')
-    .replace(new RegExp(config.root, 'g'), '')
-    .replace(new RegExp(path.join(__dirname, '..'), 'g'), '<npms>');
+    .replace(new RegExp(config.root, 'g'), '');
 
-  (config.npmScripts.presets || []).forEach(function(presetName) {
+  config.npmScripts.presets.forEach(function(preset) {
     str = str
-      .replace(new RegExp('<npms>-preset-' + presetName, 'g'), '<npms-' + presetName + '>');
+      .replace(new RegExp(preset.path, 'g'), '<npms-' + preset.shortname + '>')
+      .replace(new RegExp(preset.realpath, 'g'), '<npms-' + preset.shortname + '>')
+      .replace(new RegExp(preset.localpath, 'g'), '<npms-' + preset.shortname + '>');
   });
 
+  str = str.replace(new RegExp(path.join(__dirname, '..'), 'g'), '<npms>');
   return str;
 };
 

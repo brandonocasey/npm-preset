@@ -151,11 +151,10 @@ test.afterEach.always((t) => {
       return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
         let stdout = '';
 
-        stdout += 'npm-scripts:\n';
+        stdout += '\nnpm-scripts:\n';
         stdout += '  "touch": "touch ./file.test"\n';
-        stdout += '\n';
 
-        stdout += 'npm-scripts-preset-test:\n';
+        stdout += '\nnpm-scripts-preset-test:\n';
         stdout += '  "touch": "touch ./file.test"\n';
         stdout += '\n';
 
@@ -191,7 +190,7 @@ test('presets can be found via deps', (t) => {
     return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
       let stdout = '';
 
-      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '\nnpm-scripts-preset-test:\n';
       stdout += '  "touch": "touch ./file.test"\n';
       stdout += '\n';
 
@@ -212,7 +211,7 @@ test('presets can be found via dev deps', (t) => {
     return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
       let stdout = '';
 
-      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '\nnpm-scripts-preset-test:\n';
       stdout += '  "touch": "touch ./file.test"\n';
       stdout += '\n';
 
@@ -233,7 +232,7 @@ test('presets can be found via npm-scripts.preset long name', (t) => {
     return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
       let stdout = '';
 
-      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '\nnpm-scripts-preset-test:\n';
       stdout += '  "touch": "touch ./file.test"\n';
       stdout += '\n';
 
@@ -254,7 +253,7 @@ test('presets can be found via npm-scripts.preset short name', (t) => {
     return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
       let stdout = '';
 
-      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '\nnpm-scripts-preset-test:\n';
       stdout += '  "touch": "touch ./file.test"\n';
       stdout += '\n';
 
@@ -277,7 +276,7 @@ test('presets are skipped when not in npm-scripts.preset', (t) => {
     return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
       let stdout = '';
 
-      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '\nnpm-scripts-preset-test:\n';
       stdout += '  "touch": "touch ./file.test"\n';
       stdout += '\n';
 
@@ -323,6 +322,37 @@ test('should shorten paths by default', (t) => {
     return promiseSpawn('npms', ['echo'], {cwd: t.context.dir}).then((result) => {
       t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
       t.true(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('should shorten preset paths with short name', (t) => {
+  const base = path.join(t.context.dir, 'node_modules', 'npm-scripts-preset-test');
+
+  t.plan(3);
+  return t.context.addPreset('npm-scripts-preset-test', {echo: 'echo ' + base}).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {presets: ['test']}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--print-config'], {cwd: t.context.dir});
+  }).then((result) => {
+    t.log(result.stdout);
+    return promiseSpawn('npms', ['echo'], {cwd: t.context.dir});
+  }).then((result) => {
+    t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+    t.true(new RegExp('<npms-test>', 'g').test(result.stdout.trim()), 'stdout');
+    t.is(result.stderr.trim().length, 0, 'no stderr');
+  });
+});
+
+test('should shorten preset paths with long name', (t) => {
+  const base = path.join(t.context.dir, 'node_modules', 'npm-scripts-preset-test');
+
+  t.plan(3);
+  return t.context.addPreset('npm-scripts-preset-test', {echo: 'echo ' + base}).then(() => {
+    return promiseSpawn('npms', ['echo'], {cwd: t.context.dir}).then((result) => {
+      t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+      t.true(new RegExp('<npms-test>', 'g').test(result.stdout.trim()), 'stdout');
       t.is(result.stderr.trim().length, 0, 'no stderr');
     });
   });

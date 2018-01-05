@@ -53,7 +53,7 @@ const config = {
   scope,
   root: appRoot,
   pkg: appPkg,
-  scripts: appPkg.scripts || {},
+  scripts: {},
   npmScript: appPkg['npm-script'] || {}
 };
 
@@ -103,7 +103,15 @@ const canRequire = function(pkg) {
     scripts = scripts(config);
   }
 
-  Object.assign(config.scripts, scripts);
+  Object.keys(scripts).forEach(function(scriptName) {
+    if (config.scripts[scriptName]) {
+      console.error('Preset ' + presetName + ' attempted to add ' + scriptName + ' which is already in use');
+      process.exit(1);
+    } else {
+      config.scripts[scriptName] = scripts[scriptName];
+    }
+  });
+
 });
 
 module.exports = config;

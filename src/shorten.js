@@ -2,7 +2,7 @@ const config = require('./config');
 const path = require('path');
 
 /**
- * shorten npm-script paths so that we dont print
+ * shorten npm-scripts paths so that we dont print
  * obnoxiously long path strings to terminal
  *
  * @param {string} str
@@ -24,7 +24,7 @@ const shorten = function(str) {
     .replace(new RegExp(config.root, 'g'), '')
     .replace(new RegExp(path.join(__dirname, '..'), 'g'), '<npms>');
 
-  (config.npmScript.presets || []).forEach(function(presetName) {
+  (config.npmScripts.presets || []).forEach(function(presetName) {
     str = str
       .replace(new RegExp('<npms>-preset-' + presetName, 'g'), '<npms-' + presetName + '>');
   });

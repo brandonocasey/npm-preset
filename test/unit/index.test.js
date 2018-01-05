@@ -71,6 +71,40 @@ test.beforeEach((t) => {
     });
   };
 
+  t.context.addPreset = (name, scripts, modifyPkg) => {
+    return new Promise((resolve, reject) => {
+      if (typeof modifyPkg === 'undefined') {
+        modifyPkg = true;
+      }
+
+      const dir = path.join(tempdir, 'node_modules', name);
+
+      shelljs.mkdir('-p', dir);
+      const pkg = {
+        name,
+        version: '1.0.0',
+        description: '',
+        main: 'index.js',
+        scripts: {},
+        keywords: [],
+        author: '',
+        license: 'ISC'
+      };
+
+      fs.writeFileSync(path.join(dir, 'index.js'), 'module.exports = ' + JSON.stringify(scripts) + ';');
+      fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(pkg));
+
+      if (modifyPkg) {
+        const updatePkg = {dependencies: {}};
+
+        updatePkg.dependencies[name] = '1.0.0';
+        t.context.modifyPkg(updatePkg);
+      }
+
+      resolve();
+    });
+  };
+
   return promiseSpawn('cp', ['-R', fixtureDir + path.sep, tempdir], {});
 });
 
@@ -83,7 +117,7 @@ test.afterEach.always((t) => {
 ['-pc', '--print-config'].forEach(function(o) {
   test(o, (t) => {
     t.plan(3);
-    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
       return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
         t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
         t.not(result.stdout.trim(), 0, 'stdout');
@@ -96,7 +130,7 @@ test.afterEach.always((t) => {
 ['-V', '--version'].forEach(function(o) {
   test(o, (t) => {
     t.plan(3);
-    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
       return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
         t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
         t.not(result.stdout.trim(), 0, 'stdout');
@@ -109,12 +143,159 @@ test.afterEach.always((t) => {
 ['-l', '--list'].forEach(function(o) {
   test(o, (t) => {
     t.plan(3);
-    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    const scripts = {touch: 'touch ./file.test'};
+
+    return t.context.addPreset('npm-scripts-preset-test', scripts).then(() => {
+      return t.context.modifyPkg({'npm-scripts': {scripts}, scripts});
+    }).then(() => {
       return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
-        t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-        t.is(result.stdout.trim(), '"touch": "touch ./file.test"', 'stdout');
+        let stdout = '';
+
+        stdout += 'npm-scripts:\n';
+        stdout += '  "touch": "touch ./file.test"\n';
+        stdout += '\n';
+
+        stdout += 'npm-scripts-preset-test:\n';
+        stdout += '  "touch": "touch ./file.test"\n';
+        stdout += '\n';
+
+        t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+        t.is(result.stdout, stdout, 'stdout');
         t.is(result.stderr.trim().length, 0, 'no stderr');
       });
+    });
+  });
+});
+
+test('scripts from different sources run in parallel', (t) => {
+  t.plan(2);
+  return t.context.addPreset('npm-scripts-preset-test', {echo: 'sleep 1 && echo preset-echo'}).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {scripts: {echo: 'sleep 3 && echo npms-echo'}}, 'scripts': {echo: 'sleep 2 && echo scripts-echo'}});
+  }).then(() => {
+    return promiseSpawn('npms', ['-co', 'echo'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['preset-echo', 'npms-echo'], 'prints two');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('presets can be found via deps', (t) => {
+  t.plan(3);
+  const scripts = {touch: 'touch ./file.test'};
+
+  return t.context.addPreset('npm-scripts-preset-test', scripts, false).then(() => {
+    return t.context.modifyPkg({dependencies: {'npm-scripts-preset-test': '1.0.0'}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
+      let stdout = '';
+
+      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '  "touch": "touch ./file.test"\n';
+      stdout += '\n';
+
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+      t.is(result.stdout, stdout, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('presets can be found via dev deps', (t) => {
+  t.plan(3);
+  const scripts = {touch: 'touch ./file.test'};
+
+  return t.context.addPreset('npm-scripts-preset-test', scripts, false).then(() => {
+    return t.context.modifyPkg({devDependencies: {'npm-scripts-preset-test': '1.0.0'}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
+      let stdout = '';
+
+      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '  "touch": "touch ./file.test"\n';
+      stdout += '\n';
+
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+      t.is(result.stdout, stdout, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('presets can be found via npm-scripts.preset long name', (t) => {
+  t.plan(3);
+  const scripts = {touch: 'touch ./file.test'};
+
+  return t.context.addPreset('npm-scripts-preset-test', scripts, false).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {presets: ['npm-scripts-preset-test']}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
+      let stdout = '';
+
+      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '  "touch": "touch ./file.test"\n';
+      stdout += '\n';
+
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+      t.is(result.stdout, stdout, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('presets can be found via npm-scripts.preset short name', (t) => {
+  t.plan(3);
+  const scripts = {touch: 'touch ./file.test'};
+
+  return t.context.addPreset('npm-scripts-preset-test', scripts, false).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {presets: ['test']}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
+      let stdout = '';
+
+      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '  "touch": "touch ./file.test"\n';
+      stdout += '\n';
+
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+      t.is(result.stdout, stdout, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('presets are skipped when not in npm-scripts.preset', (t) => {
+  t.plan(3);
+  const scripts = {touch: 'touch ./file.test'};
+
+  return t.context.addPreset('npm-scripts-preset-test', scripts, false).then(() => {
+    return t.context.addPreset('npm-scripts-preset-test2', scripts, false);
+  }).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {presets: ['test']}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
+      let stdout = '';
+
+      stdout += 'npm-scripts-preset-test:\n';
+      stdout += '  "touch": "touch ./file.test"\n';
+      stdout += '\n';
+
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+      t.is(result.stdout, stdout, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
+test('invalid presets error', (t) => {
+  t.plan(3);
+
+  return t.context.modifyPkg({'npm-scripts': {presets: ['test']}}).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.is(result.stdout.trim(), '', 'stdout');
+      t.not(result.stderr.trim().length, 0, 'stderr');
+      t.not(result.exitCode, 0, 'failure');
     });
   });
 });
@@ -124,7 +305,7 @@ test.afterEach.always((t) => {
     const base = path.join(__dirname, '..', '..');
 
     t.plan(3);
-    return t.context.modifyPkg({scripts: {echo: 'echo ' + base}}).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {scripts: {echo: 'echo ' + base}}}).then(() => {
       return promiseSpawn('npms', [o, 'echo'], {cwd: t.context.dir}).then((result) => {
         t.true(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
         t.false(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
@@ -138,7 +319,7 @@ test('should shorten paths by default', (t) => {
   const base = path.join(__dirname, '..', '..');
 
   t.plan(3);
-  return t.context.modifyPkg({scripts: {echo: 'echo ' + base }}).then(() => {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {echo: 'echo ' + base }}}).then(() => {
     return promiseSpawn('npms', ['echo'], {cwd: t.context.dir}).then((result) => {
       t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
       t.true(new RegExp('<npms>', 'g').test(result.stdout.trim()), 'stdout');
@@ -150,7 +331,7 @@ test('should shorten paths by default', (t) => {
 ['-q', '--quiet'].forEach(function(o) {
   test(o, (t) => {
     t.plan(3);
-    return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
       return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
         t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
         t.is(result.stdout.trim().length, 0, 'no stdout');
@@ -163,7 +344,7 @@ test('should shorten paths by default', (t) => {
 ['-co', '--commands-only'].forEach(function(o) {
   test(o, (t) => {
     t.plan(2);
-    return t.context.modifyPkg({scripts: {touch: 'echo 1'}}).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'echo 1'}}}).then(() => {
       return promiseSpawn('npms', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
         t.is(result.stdout.trim(), '1', 'stdout of 1');
         t.is(result.stderr.trim().length, 0, 'no stderr');
@@ -174,7 +355,7 @@ test('should shorten paths by default', (t) => {
 
 test('serial: single', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npms', ['touch'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
     });
@@ -183,7 +364,7 @@ test('serial: single', (t) => {
 
 test('serial: double', (t) => {
   t.plan(2);
-  return t.context.modifyPkg({scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}).then(() => {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}}).then(() => {
     return promiseSpawn('npms', ['touch', 'touch2'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -193,12 +374,12 @@ test('serial: double', (t) => {
 
 test('serial: *', (t) => {
   t.plan(4);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'touch:one': 'touch file.test',
     'touch:two': 'touch file2.test',
     'touch': 'touch file3.test',
     'touch:one:two': 'touch file4.test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['touch:*'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -210,7 +391,7 @@ test('serial: *', (t) => {
 
 test('parallel: single', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({scripts: {touch: 'touch ./file.test'}}).then(() => {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npms', ['-p', 'touch'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
     });
@@ -219,7 +400,7 @@ test('parallel: single', (t) => {
 
 test('parallel: double', (t) => {
   t.plan(2);
-  return t.context.modifyPkg({scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}).then(() => {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}}).then(() => {
     return promiseSpawn('npms', ['-p', 'touch', 'touch2'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -229,12 +410,12 @@ test('parallel: double', (t) => {
 
 test('parallel: *', (t) => {
   t.plan(4);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'touch:one': 'touch file.test',
     'touch:two': 'touch file2.test',
     'touch': 'touch file3.test',
     'touch:one:two': 'touch file4.test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['-p', 'touch:*'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -246,10 +427,10 @@ test('parallel: *', (t) => {
 
 test('serial and parallel: single', (t) => {
   t.plan(2);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     touch: 'touch ./file.test',
     touch2: 'touch ./file2.test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['touch', '-p', 'touch2'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -259,12 +440,12 @@ test('serial and parallel: single', (t) => {
 
 test('serial and parallel: double', (t) => {
   t.plan(4);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     touch: 'touch ./file.test',
     touch2: 'touch ./file2.test',
     touch3: 'touch ./file3.test',
     touch4: 'touch ./file4.test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['touch', 'touch2', '-p', 'touch3', 'touch4'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -276,7 +457,7 @@ test('serial and parallel: double', (t) => {
 
 test('serial and parallel: *', (t) => {
   t.plan(8);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'serial:one': 'touch ./file.test',
     'serial:two': 'touch ./file2.test',
     'parallel:one': 'touch ./file3.test',
@@ -286,7 +467,7 @@ test('serial and parallel: *', (t) => {
     'parallel': 'touch ./file6.test',
     'serial:one:one': 'touch ./file7.test',
     'serial': 'touch ./file8.test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['-s', 'serial:*', '-p', 'parallel:*'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -303,11 +484,11 @@ test('serial and parallel: *', (t) => {
 
 test('serial: nested', (t) => {
   t.plan(2);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'serial': 'npms serial:*',
     'serial:one': 'touch ./file.test',
     'serial:two': 'touch ./file2.test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['serial'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -317,11 +498,11 @@ test('serial: nested', (t) => {
 
 test('parallel: nested', (t) => {
   t.plan(2);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'parallel': 'npms -p parallel:*',
     'parallel:one': 'touch ./file.test',
     'parallel:two': 'touch ./file2.test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['parallel'], {cwd: t.context.dir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
@@ -331,7 +512,7 @@ test('parallel: nested', (t) => {
 
 test('verify serial default', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'test:one': 'echo 1',
     'test:two': 'echo 2',
     'test:three': 'echo 3',
@@ -340,7 +521,7 @@ test('verify serial default', (t) => {
     'test:six': 'echo 6',
     'test:seven': 'echo 7',
     'test:eight': 'echo 8'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'test:*'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -351,11 +532,11 @@ test('verify serial default', (t) => {
 
 test('verify serial default', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'test:one': 'echo 1',
     'test:two': 'sleep 1 && echo 2',
     'test:three': 'echo 3'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-s', 'test:*'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -366,11 +547,11 @@ test('verify serial default', (t) => {
 
 test('verify parallel order', (t) => {
   t.plan(4);
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'test:one': 'echo 1',
     'test:two': 'sleep 1 && echo 2',
     'test:three': 'echo 3'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'test:*'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -385,7 +566,7 @@ test('verify parallel order', (t) => {
 test('verify serial & parallel', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     'test:one': 'sleep 1 && echo 1',
     'test:two': 'echo 2',
     'test:three': 'echo 3',
@@ -394,7 +575,7 @@ test('verify serial & parallel', (t) => {
     'test:six': 'echo 6',
     'test:seven': 'echo 7',
     'test:eight': 'echo 8'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only',
       '-p', 'test:one', 'test:two',
       '-s', 'test:three', 'test:four',
@@ -411,9 +592,9 @@ test('verify serial & parallel', (t) => {
 test('serial: first exit failure', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'exit 1'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.not(result.exitCode, 0, 'fails');
     });
@@ -423,10 +604,10 @@ test('serial: first exit failure', (t) => {
 test('serial: second exit failure', (t) => {
   t.plan(2);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'echo test',
     two: 'exit 1'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one', 'two'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.is(result.stdout.trim(), 'test', 'test is printed');
       t.not(result.exitCode, 0, 'fails');
@@ -437,9 +618,9 @@ test('serial: second exit failure', (t) => {
 test('parallel: first exit failure', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'exit 1'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['-p', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.not(result.exitCode, 0, 'fails');
     });
@@ -449,10 +630,10 @@ test('parallel: first exit failure', (t) => {
 test('parallel: second exit failure', (t) => {
   t.plan(2);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'echo test',
-    two: 'exit 1'
-  }}).then(() => {
+    two: 'sleep 1 && exit 1'
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one', 'two'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.is(result.stdout.trim(), 'test', 'test is printed');
       t.not(result.exitCode, 0, 'fails');
@@ -463,10 +644,10 @@ test('parallel: second exit failure', (t) => {
 test('serial: pre script', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'echo test',
     preone: 'echo pre'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -479,10 +660,10 @@ test('serial: post script', (t) => {
 
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'echo test',
     postone: 'echo post'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -494,11 +675,11 @@ test('serial: post script', (t) => {
 test('serial: pre and post script', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     preone: 'echo pre',
     one: 'echo test',
     postone: 'echo post'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -510,11 +691,11 @@ test('serial: pre and post script', (t) => {
 test('serial: pre and double pre ', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     preone: 'echo pre',
     prepreone: 'echo prepre',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -527,11 +708,11 @@ test('serial: pre and double pre ', (t) => {
 test('serial: post and double post', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     postpostone: 'echo postpost',
     postone: 'echo post',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -543,10 +724,10 @@ test('serial: post and double post', (t) => {
 test('serial: pre failure', (t) => {
   t.plan(2);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     preone: 'exit 1',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.is(result.stdout.trim().length, 0, 'nothing printed');
       t.not(result.exitCode, 0, 'failed');
@@ -557,10 +738,10 @@ test('serial: pre failure', (t) => {
 test('serial: post failure', (t) => {
   t.plan(2);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     postone: 'exit 1',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -573,10 +754,10 @@ test('serial: post failure', (t) => {
 test('parallel: pre script', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'echo test',
     preone: 'echo pre'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -589,10 +770,10 @@ test('parallel: post script', (t) => {
 
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     one: 'echo test',
     postone: 'echo post'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -604,11 +785,11 @@ test('parallel: post script', (t) => {
 test('parallel: pre and post script', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     preone: 'echo pre',
     one: 'echo test',
     postone: 'echo post'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -620,11 +801,11 @@ test('parallel: pre and post script', (t) => {
 test('parallel: pre and double pre ', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     preone: 'echo pre',
     prepreone: 'echo prepre',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -637,11 +818,11 @@ test('parallel: pre and double pre ', (t) => {
 test('parallel: post and double post', (t) => {
   t.plan(1);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     postpostone: 'echo postpost',
     postone: 'echo post',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 
@@ -653,10 +834,10 @@ test('parallel: post and double post', (t) => {
 test('parallel: pre failure', (t) => {
   t.plan(2);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     preone: 'exit 1',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.is(result.stdout.trim().length, 0, 'nothing printed');
       t.not(result.exitCode, 0, 'failed');
@@ -667,10 +848,10 @@ test('parallel: pre failure', (t) => {
 test('parallel: post failure', (t) => {
   t.plan(2);
 
-  return t.context.modifyPkg({scripts: {
+  return t.context.modifyPkg({'npm-scripts': {scripts: {
     postone: 'exit 1',
     one: 'echo test'
-  }}).then(() => {
+  }}}).then(() => {
     return promiseSpawn('npms', ['--commands-only', '-p', 'one'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
 

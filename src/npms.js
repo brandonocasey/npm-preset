@@ -35,7 +35,7 @@ const usage = function() {
   console.log('  -q,  --quiet                     Only print errors and warnings');
   console.log('  -l,  --list                      Print available scripts and exit');
   console.log('  -co, --commands-only             Only print errors, warnings, and script output');
-  console.log('  -pc, --print-config              Print the npm-script config and exit');
+  console.log('  -pc, --print-config              Print the npm-scripts config and exit');
   console.log('  -ns, --no-shorten                Do not shorten paths in stdout/stderr');
   console.log();
 };
@@ -125,8 +125,25 @@ if (cluster.isMaster) {
   }
 
   if (options.list) {
-    Object.keys(config.scripts).forEach(function(k) {
-      console.log('"' + k + '": "' + config.scripts[k] + '"');
+    const sources = {};
+
+    // get all scripts by their source aka, where they are from
+    Object.keys(config.scripts).forEach(function(scriptName) {
+      config.scripts[scriptName].forEach(function(scriptObj) {
+        sources[scriptObj.source] = sources[scriptObj.source] || {};
+        sources[scriptObj.source][scriptName] = scriptObj.command;
+      });
+    });
+
+    // print scripts based on where they come from
+    console.log();
+    Object.keys(sources).sort().forEach(function(source) {
+      console.log(source + ':');
+
+      Object.keys(sources[source]).forEach(function(scriptName) {
+        console.log('  "' + scriptName + '": "' + sources[source][scriptName] + '"');
+      });
+      console.log();
     });
     process.exit(0);
   }

@@ -54,15 +54,15 @@ const config = {
   root: appRoot,
   pkg: appPkg,
   scripts: {},
-  npmScript: appPkg['npm-script'] || {}
+  npmScripts: appPkg['npm-scripts'] || {}
 };
 
 // if not presets are listed
 // see if we can find any installed presets
-if (!config.npmScript.presets) {
+if (!config.npmScripts.presets) {
   const packages = Object.keys(config.pkg.dependencies || {}).concat(Object.keys(config.pkg.devDependencies || {}));
 
-  config.npmScript.presets = packages.filter((packageName) => (/^npm-script-preset-/).test(packageName));
+  config.npmScripts.presets = packages.filter((packageName) => (/^npm-scripts-preset-/).test(packageName));
 }
 
 const canRequire = function(pkg) {
@@ -74,14 +74,24 @@ const canRequire = function(pkg) {
   }
 };
 
-(config.npmScript.presets || []).forEach(function(presetName) {
+const addScript = function(scriptName, obj) {
+  config.scripts[scriptName] = config.scripts[scriptName] || [];
+  config.scripts[scriptName].push(obj);
+};
+
+Object.keys(config.npmScripts.scripts || {}).forEach(function(scriptName) {
+  addScript(scriptName, {command: config.npmScripts.scripts[scriptName], source: 'npm-scripts'});
+});
+
+(config.npmScripts.presets || []).forEach(function(presetName) {
   const nodeModules = path.join(config.root, 'node_modules');
   let presetPath;
   let presetPkg = {};
 
-  if (canRequire(path.join(nodeModules, 'npm-script-preset-' + presetName, 'package.json'))) {
-    presetPath = path.join(nodeModules, 'npm-script-preset-' + presetName);
+  if (canRequire(path.join(nodeModules, 'npm-scripts-preset-' + presetName, 'package.json'))) {
+    presetPath = path.join(nodeModules, 'npm-scripts-preset-' + presetName);
     presetPkg = require(path.join(presetPath, 'package.json'));
+    presetName = 'npm-scripts-preset-' + presetName;
   } else if (canRequire(path.join(nodeModules, presetName, 'package.json'))) {
     presetPath = path.join(nodeModules, presetName);
     presetPkg = require(path.join(presetPath, 'package.json'));
@@ -104,14 +114,8 @@ const canRequire = function(pkg) {
   }
 
   Object.keys(scripts).forEach(function(scriptName) {
-    if (config.scripts[scriptName]) {
-      console.error('Preset ' + presetName + ' attempted to add ' + scriptName + ' which is already in use');
-      process.exit(1);
-    } else {
-      config.scripts[scriptName] = scripts[scriptName];
-    }
+    addScript(scriptName, {command: scripts[scriptName], source: presetName});
   });
-
 });
 
 module.exports = config;

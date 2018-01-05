@@ -13,7 +13,10 @@ const scripts = config.scripts;
  * @param {string} scriptName
  *        Only passed so that we can emulate npm logging
  *
- * @param {string} c
+ * @param {string} source
+ *        where this script comes from, can be npm-scripts, or a preset name
+ *
+ * @param {string} command
  *        The value of the script, ie the actual command to run for the script.
  *        If the command contains npm run we assume it is a script, and return to
  *        runScript with it an any args
@@ -25,7 +28,7 @@ const scripts = config.scripts;
  * @return {Promise}
  *         A promise that is resolved when the script or command that was run finishes
  */
-const runCommand = function(scriptName, command, args) {
+const runCommand = function(scriptName, source, command, args) {
   command = shellQuote.parse(command);
   command = command.map(function(c) {
     if (typeof c === 'object') {
@@ -49,7 +52,7 @@ const runCommand = function(scriptName, command, args) {
   // mimic npm output
   if (!process.env || !process.env.NPM_SCRIPT_COMMANDS_ONLY) {
     console.log();
-    console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' ' + config.root);
+    console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' (' + source + ') ' + config.root);
     console.log('> ' + command.join(' '));
     console.log();
   }
@@ -83,7 +86,10 @@ const runScript = function(scriptName, args = []) {
 
     return resolve({exitCode: 0});
   }).then(function(result) {
-    return runCommand(scriptName, scripts[scriptName], args);
+    // run any scripts with the same name in parallel
+    return Promise.map(scripts[scriptName], (scriptObject) => {
+      return runCommand(scriptName, scriptObject.source, scriptObject.command, args);
+    });
   }).then(function(result) {
     if (scripts['post' + scriptName]) {
       return runScript('post' + scriptName);

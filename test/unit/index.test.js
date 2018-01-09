@@ -292,6 +292,34 @@ test('presets can be an object in npm-scripts.preset', (t) => {
   });
 });
 
+test('presets can be a function', (t) => {
+  t.plan(3);
+  const scripts = {touch: 'touch ./file.test'};
+  const preset = {
+    path: path.join(t.context.dir, 'my-custom-preset.js'),
+    name: 'my-custom-preset'
+  };
+
+  return new Promise((resolve, reject) => {
+    fs.writeFileSync(preset.path, 'module.exports = function() { return ' + JSON.stringify(scripts) + '; };');
+    resolve();
+  }).then(() => {
+    return t.context.modifyPkg({'npm-scripts': {presets: [preset]}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
+      let stdout = '';
+
+      stdout += '\nmy-custom-preset:\n';
+      stdout += '  "touch": "touch ./file.test"\n';
+      stdout += '\n';
+
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+      t.is(result.stdout, stdout, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
 test('presets are skipped when not in npm-scripts.preset', (t) => {
   t.plan(3);
   const scripts = {touch: 'touch ./file.test'};

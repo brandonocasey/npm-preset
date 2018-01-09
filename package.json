@@ -1,7 +1,7 @@
 {
   "name": "npm-preset",
   "version": "1.0.0",
-  "description": "",
+  "description": "Faster, sharable, and parallel npm scripts",
   "bin": {
     "npmp": "./src/npmp.js",
     "npm-preset": "./src/npmp.js"
@@ -12,10 +12,13 @@
     "prepublishOnly": "npm run test",
     "test": "ava test/unit/*.test.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brandonocasey/npm-preset.git"
+  },
   "author": "brandonocasey <brandonocasey@gmail.com>",
   "license": "MIT",
   "files": [
-    "CONTRIBUTING.md",
     "src/",
     "test/"
   ],

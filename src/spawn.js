@@ -1,5 +1,5 @@
 const config = require('./config');
-const npmRun = require('npm-run');
+const childProcess = require('child_process');
 const Promise = require('bluebird');
 const jsonConfig = JSON.stringify(config);
 
@@ -24,7 +24,7 @@ const spawn = function(command) {
     env.FORCE_COLOR = true;
 
     const bin = command.shift();
-    let child = npmRun.spawn(bin, command, {cwd: config.root, env, shell: true});
+    let child = childProcess.spawn(bin, command, {cwd: config.root, env, shell: true});
 
     child.stdout.on('data', function(chunk) {
       process.stdout.write(chunk);

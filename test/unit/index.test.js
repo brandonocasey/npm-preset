@@ -3,7 +3,7 @@ import path from 'path';
 import uuid from 'uuid';
 import fs from 'fs';
 import shelljs from 'shelljs';
-import npmRun from 'npm-run';
+import childProcess from 'child_process';
 import Promise from 'bluebird';
 
 const fixtureDir = path.join(__dirname, '..', 'fixtures', 'test-pkg-main');
@@ -11,7 +11,7 @@ const baseDir = path.join(__dirname, '..', '..');
 
 const promiseSpawn = function(bin, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = npmRun.spawn(bin, args, options);
+    const child = childProcess.spawn(bin, args, options);
     let stdout = '';
     let stderr = '';
     let out = '';

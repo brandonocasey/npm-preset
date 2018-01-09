@@ -16,6 +16,9 @@ if (!path.isAbsolute(dir)) {
 }
 
 const appRoot = findRoot(dir);
+
+npmPath.setSync({cwd: appRoot});
+
 const appPkg = require(path.join(dir, 'package.json'));
 const name = appPkg.name.replace(/^@.+\//, '');
 const scope = appPkg.name.replace(name, '').replace(/\/$/, '');

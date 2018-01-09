@@ -23,9 +23,7 @@
     "find-root": "^1.1.0",
     "intercept-stdout": "^0.1.2",
     "npm-path": "^2.0.4",
-    "npm-run": "^4.1.2",
-    "shell-quote": "^1.6.1",
-    "yargs": "^10.0.3"
+    "shell-quote": "^1.6.1"
   },
   "ava": {
     "timeout": "15s",

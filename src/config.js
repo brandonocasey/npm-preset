@@ -2,7 +2,9 @@
 const findRoot = require('find-root');
 const path = require('path');
 const fs = require('fs');
+const npmPath = require('npm-path');
 
+npmPath.setSync()
 /**
  * The config contains anything that might be needed from the package.json
  * of the project that is using npm script.
@@ -69,11 +71,11 @@ if (!config.npmScripts.presets) {
 config.npmScripts.presets = config.npmScripts.presets || [];
 config.npmScripts.scripts = config.npmScripts.scripts || {};
 
-const canRequire = function(pkg) {
+const pathExists = function(p) {
   try {
-    require(pkg);
+    fs.statSync(p);
     return true;
-  } catch (e) {
+  } catch (x) {
     return false;
   }
 };
@@ -93,28 +95,19 @@ config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
   }
   const nodeModules = path.join(config.root, 'node_modules');
 
-  if (!preset.path && canRequire(path.join(nodeModules, 'npm-scripts-preset-' + preset.name, 'package.json'))) {
+  if (!preset.path && pathExists(path.join(nodeModules, 'npm-scripts-preset-' + preset.name))) {
     preset.name = 'npm-scripts-preset-' + preset.name;
     preset.path = path.join(nodeModules, preset.name);
-  } else if (!preset.path && canRequire(path.join(nodeModules, preset.name, 'package.json'))) {
+  } else if (!preset.path && pathExists(path.join(nodeModules, preset.name))) {
     preset.path = path.join(nodeModules, preset.name);
-  }
-
-  if (!canRequire(preset.path)) {
+  } else {
     console.error('Could not find ' + preset.name + ', is it installed?');
     process.exit(1);
   }
 
-  const presetPkg = require(path.join(preset.path, 'package.json'));
+  let scripts = require(path.join(preset.path));
 
-  if (!presetPkg.main || !canRequire(path.join(preset.path, presetPkg.main))) {
-    console.error('Preset ' + preset.name + ' is missing a main file, or has an invalid main file!');
-    process.exit(1);
-  }
-
-  let scripts = require(path.join(preset.path, presetPkg.main));
-
-  process.env.PATH += ':' + path.join(preset.path, 'node_modules', '.bin');
+  npmPath.setSync({cwd: preset.path});
 
   if (typeof scripts === 'function') {
     scripts = scripts(config);

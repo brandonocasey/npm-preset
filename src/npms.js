@@ -142,7 +142,7 @@ if (cluster.isMaster) {
     Object.keys(sources).sort().forEach(function(source) {
       console.log(source + ':');
 
-      Object.keys(sources[source]).forEach(function(scriptName) {
+      Object.keys(sources[source]).sort().forEach(function(scriptName) {
         console.log('  "' + scriptName + '": "' + sources[source][scriptName] + '"');
       });
       console.log();

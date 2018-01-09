@@ -26,9 +26,9 @@ const shorten = function(str) {
 
   config.npmScripts.presets.forEach(function(preset) {
     str = str
-      .replace(new RegExp(preset.path, 'g'), '<npms-' + preset.shortname + '>')
-      .replace(new RegExp(preset.realpath, 'g'), '<npms-' + preset.shortname + '>')
-      .replace(new RegExp(preset.localpath, 'g'), '<npms-' + preset.shortname + '>');
+      .replace(new RegExp(preset.path, 'g'), '<npms-' + preset._shortname + '>')
+      .replace(new RegExp(preset._realpath, 'g'), '<npms-' + preset._shortname + '>')
+      .replace(new RegExp(preset._localpath, 'g'), '<npms-' + preset._shortname + '>');
   });
 
   str = str.replace(new RegExp(path.join(__dirname, '..'), 'g'), '<npms>');

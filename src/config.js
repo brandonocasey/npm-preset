@@ -124,9 +124,9 @@ config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
     addScript(scriptName, {command: scripts[scriptName], source: preset.name});
   });
 
-  preset.shortname = preset.name.replace(/^npm-scripts-preset-/, '');
-  preset.realpath = fs.realpathSync(preset.path);
-  preset.localpath = path.relative(config.root, preset.path);
+  preset._shortname = preset.name.replace(/^npm-scripts-preset-/, '');
+  preset._realpath = fs.realpathSync(preset.path);
+  preset._localpath = path.relative(config.root, preset.path);
 
   return preset;
 });

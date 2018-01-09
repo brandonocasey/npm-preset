@@ -35,7 +35,7 @@ const usage = function() {
   console.log('  -q,  --quiet                     Only print errors and warnings');
   console.log('  -l,  --list                      Print available scripts and exit');
   console.log('  -co, --commands-only             Only print errors, warnings, and script output');
-  console.log('  -pc, --print-config              Print the npm-scripts config and exit');
+  console.log('  -pc, --print-config              Print the npm-preset config and exit');
   console.log('  -ns, --no-shorten                Do not shorten paths in stdout/stderr');
   console.log();
 };
@@ -118,7 +118,7 @@ if (cluster.isMaster) {
   }
 
   if (options.commandsOnly) {
-    process.env.NPM_SCRIPT_COMMANDS_ONLY = true;
+    process.env.NPM_PRESET_COMMANDS_ONLY = true;
   }
 
   if (!config.scripts || !Object.keys(config.scripts).length) {
@@ -189,4 +189,3 @@ if (cluster.isMaster) {
     process.exit(result.exitCode);
   });
 }
-

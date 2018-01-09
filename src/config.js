@@ -60,7 +60,7 @@ const config = {
   root: appRoot,
   pkg: appPkg,
   scripts: {},
-  npmScripts: appPkg['npm-scripts'] || {}
+  npmScripts: appPkg['npm-preset'] || {}
 };
 
 // if not presets are listed
@@ -68,7 +68,7 @@ const config = {
 if (!config.npmScripts.presets) {
   const packages = Object.keys(config.pkg.dependencies || {}).concat(Object.keys(config.pkg.devDependencies || {}));
 
-  config.npmScripts.presets = packages.filter((packageName) => (/npm-scripts-preset-.*$/).test(packageName));
+  config.npmScripts.presets = packages.filter((packageName) => (/npm-preset-.*$/).test(packageName));
 }
 
 config.npmScripts.presets = config.npmScripts.presets || [];
@@ -89,7 +89,7 @@ const addScript = function(scriptName, obj) {
 };
 
 Object.keys(config.npmScripts.scripts).forEach(function(scriptName) {
-  addScript(scriptName, {command: config.npmScripts.scripts[scriptName], source: 'npm-scripts'});
+  addScript(scriptName, {command: config.npmScripts.scripts[scriptName], source: 'npm-preset'});
 });
 
 config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
@@ -100,8 +100,8 @@ config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
   if (!preset.path) {
     const nodeModules = path.join(config.root, 'node_modules');
 
-    if (!preset.path && pathExists(path.join(nodeModules, 'npm-scripts-preset-' + preset.name))) {
-      preset.name = 'npm-scripts-preset-' + preset.name;
+    if (!preset.path && pathExists(path.join(nodeModules, 'npm-preset-' + preset.name))) {
+      preset.name = 'npm-preset-' + preset.name;
       preset.path = path.join(nodeModules, preset.name);
     } else if (!preset.path && pathExists(path.join(nodeModules, preset.name))) {
       preset.path = path.join(nodeModules, preset.name);
@@ -124,7 +124,7 @@ config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
     addScript(scriptName, {command: scripts[scriptName], source: preset.name});
   });
 
-  preset._shortname = preset.name.replace(/^npm-scripts-preset-/, '');
+  preset._shortname = preset.name.replace(/^npm-preset-/, '');
   preset._realpath = fs.realpathSync(preset.path);
   preset._localpath = path.relative(config.root, preset.path);
 

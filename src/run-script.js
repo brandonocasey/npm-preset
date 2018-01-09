@@ -14,7 +14,7 @@ const scripts = config.scripts;
  *        Only passed so that we can emulate npm logging
  *
  * @param {string} source
- *        where this script comes from, can be npm-scripts, or a preset name
+ *        where this script comes from, can be npm-preset, or a preset name
  *
  * @param {string} command
  *        The value of the script, ie the actual command to run for the script.
@@ -50,7 +50,7 @@ const runCommand = function(scriptName, source, command, args) {
   command = command.concat(args);
 
   // mimic npm output
-  if (!process.env || !process.env.NPM_SCRIPT_COMMANDS_ONLY) {
+  if (!process.env || !process.env.NPM_PRESET_COMMANDS_ONLY) {
     console.log();
     console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' (' + source + ') ' + config.root);
     console.log('> ' + command.join(' '));

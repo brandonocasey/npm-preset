@@ -1,8 +1,11 @@
-# npm-scripts
+# npm-preset
+[![Build Status][travis-icon]][travis-link]
+
+[![NPM][npm-icon]][npm-link]
 
 ## Table of Contents
 
-* [Benefits over vanilla npm scripts](#benefits-over-vanilla-npm-scripts)
+* [Benefits over vanilla npm scripts](#benefits-over-vanilla-npm-preset)
 * [Usage](#usage)
 * [What is this?](#what-is-this)
 * [Why do do need this?](#why-do-do-need-this)
@@ -10,34 +13,34 @@
   * [Presets:](#presets)
   * [Configuring a Preset](#configuring-a-preset)
 * [Writing Presets](#writing-presets)
-* [The npm-scripts "config"](#the-npm-scripts-config)
+* [The npm-preset "config"](#the-npm-preset-config)
 * [Recommendations](#recommendations)
 
 ## Benefits over vanilla npm scripts
 
 * ~60% Faster than vanilla npm scripts due to cluster processes (multi-threading) and less overhead
 * Sharable npm scripts, so that projects you manage can be kept up to date easily
-* Independent from npm. This allows npm to run npm-scripts through its own scripts
+* Independent from npm. This allows npm to run npm-preset through its own scripts
 * The ability to run scripts in series or parallel
 * The ability to run scripts using wild cards
 * Long paths shortend based on the current package root
-* Any installed binary from node_modules can be run in npm-scripts without an absolute path
+* Any installed binary from node_modules can be run in npm-preset without an absolute path
 
 ## Usage
 
 To install use npm:
 
 ```bash
-npm i npm-scripts
+npm i npm-preset
 ```
 
-This will give you a binary called `npms`. Which can:
+This will give you a binary called `npmp`. Which can:
 
 * run any of your current projects npm scripts in series or parallel similar to `npm-run-all`
 * You can use a `*` character to specify scripts ie: `build:*` will run `build:test` and `build:js` but not `build:js:other` or `build`
-* Use `npms --help` to see what else it can do
+* Use `npmp --help` to see what else it can do
 
-The real magic happens when you add a preset, such a `npm-scripts-preset-awesome`. This will allow you to run scripts from that preset! For instance if that preset implemented
+The real magic happens when you add a preset, such a `npm-preset-awesome`. This will allow you to run scripts from that preset! For instance if that preset implemented
 `build:something:awesome` and you run it with `npm build:something:awesome` it will run as an npm script for the current project with all paths local to the current project!
 
 ## What is this?
@@ -56,24 +59,24 @@ npm has a great task runner that it calls scripts, but trying to manage them bet
 
 ## Configuration
 
-Right now `npm-scripts` is only configuratble via `package.json` feel free to submit a pr if you think we should have more or you think that the options are lacking.
+Right now `npm-preset` is only configuratble via `package.json` feel free to submit a pr if you think we should have more or you think that the options are lacking.
 
 ### Presets:
 
-By Default `npm-scripts` will automatically search for any presets with the following name `*npm-scripts-presets-*` and attempt to add those scripts to its script list.
+By Default `npm-preset` will automatically search for any presets with the following name `*npm-presets-*` and attempt to add those scripts to its script list.
 
 > Note that it will only search through `dependencies` and `devDependencies`. If you have a locally installed package that is not in there, you will have to add the preset.
 
-If you want to configure a preset or which presets are used you should add an `npm-scripts` key at the root of `package.json`. You can then add a `presets` array that will take the full name of the package `some-preset`, or the shortname in the cases were the package name follows the convention `npm-scripts-preset-something` could be listed as `something`.
+If you want to configure a preset or which presets are used you should add an `npm-preset` key at the root of `package.json`. You can then add a `presets` array that will take the full name of the package `some-preset`, or the shortname in the cases were the package name follows the convention `npm-preset-something` could be listed as `something`.
 
 Example: (you would not want to include the same preset twice, this is just for reference)
 
 ```json
 {
-  "npm-scripts": {
+  "npm-preset": {
     "presets": [
       "something",
-      "npm-scripts-preset-something",
+      "npm-preset-something",
       "some-other-preset"
     ]
   }
@@ -84,10 +87,10 @@ Presets can also be specifed as an object instead of a string and they must have
 
 ```json
 {
-  "npm-scripts": {
+  "npm-preset": {
     "presets": [
       {"name": "my-custom-preset", path: "./my-custom-preset.js"},
-      {"name": "npm-scripts-preset-something"}
+      {"name": "npm-preset-something"}
     ]
   }
 }
@@ -95,16 +98,16 @@ Presets can also be specifed as an object instead of a string and they must have
 
 ### Configuring a Preset
 
-Each preset can be configured by specifing the long or short preset name under the `npm-scripts` key in package.json. From there it is up to the preset to decide what format its options should be in.
+Each preset can be configured by specifing the long or short preset name under the `npm-preset` key in package.json. From there it is up to the preset to decide what format its options should be in.
 
 Example: (you would not want to include configuration for the same preset twice, this is just for reference)
 
 ```json
 {
-  "npm-scripts": {
+  "npm-preset": {
     "some-other-preset": [],
     "something": {},
-    "npm-scripts-preset-something": {},
+    "npm-preset-something": {},
   }
 }
 ```
@@ -115,14 +118,14 @@ Presets can be written in three formats:
 
 * A JavaScript file that exports an object containing scripts
 * A JSON file that contains an object with scripts
-* A JavaScript function that returns an object containing scripts. It takes one argument: the current npm-scripts config.
+* A JavaScript function that returns an object containing scripts. It takes one argument: the current npm-preset config.
 
 Things to know:
 
 * if you need to pass config files during a command you will want to use absolute paths to do so.
-* When a script is run process.env.NPM_SCRIPT_CONFIG will be set to the current `npm-scripts` config. This should allow you to use any of the special variables from that file just about anywhere (babel config, rollup config, a random npm script)
+* When a script is run process.env.NPM_PRESET_CONFIG will be set to the current `npm-preset` config. This should allow you to use any of the special variables from that file just about anywhere (babel config, rollup config, a random npm script)
 
-## The npm-scripts "config"
+## The npm-preset "config"
 
 This is not really a config, its more of a useful state object that is passed around. Properties include:
 
@@ -132,9 +135,15 @@ This is not really a config, its more of a useful state object that is passed ar
 * scope: The scope of the package minus the name
 * moduleName: camelCase version of the name, usually used in global exporting on window for the browser
 * pkg: The unmodified app package. Will be removed when using `--print-config`
-* npmScript: The final npmScript config, after small modification have been done and `pkg['npm-scripts']` has been taken into account.
+* npmScript: The final npmScript config, after small modification have been done and `pkg['npm-preset']` has been taken into account.
 * scripts: This starts with the scripts from the current package, from there presets are merged into this script list
 
 ## Recommendations
 
-We recommend that `npm-scripts` and any presets be locked to a single version and not a version range. We then recommend that `greenkeeper` be enabled so that it can submit prs for to update `npm-scripts`. This will prevent your build pipeline from changing out from under you and from any break that may be possible.
+We recommend that `npm-preset` and any presets be locked to a single version and not a version range. We then recommend that `greenkeeper` be enabled so that it can submit prs for to update `npm-preset`. This will prevent your build pipeline from changing out from under you and from any break that may be possible.
+
+[travis-icon]: https://travis-ci.org/BrandonOCasey/npm-preset.svg?branch=master
+[travis-link]: https://travis-ci.org/BrandonOCasey/npm-preset
+
+[npm-icon]: https://nodei.co/npm/npm-preset.js.png?downloads=true&downloadRank=true
+[npm-link]: https://nodei.co/npm/npm-preset/

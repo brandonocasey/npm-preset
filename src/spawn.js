@@ -20,7 +20,7 @@ const spawn = function(command) {
   return new Promise(function(resolve, reject) {
     const env = process.env;
 
-    env.NPM_SCRIPT_CONFIG = jsonConfig;
+    env.NPM_PRESET_CONFIG = jsonConfig;
     env.FORCE_COLOR = true;
 
     const bin = command.shift();

@@ -1,10 +1,10 @@
 {
-  "name": "npm-scripts",
+  "name": "npm-preset",
   "version": "0.0.0",
   "description": "",
   "bin": {
-    "npms": "./src/npms.js",
-    "npm-scripts": "./src/npms.js"
+    "npmp": "./src/npmp.js",
+    "npm-preset": "./src/npmp.js"
   },
   "scripts": {
     "test:manual": "node test/scripts/setup.js",

@@ -145,5 +145,5 @@ We recommend that `npm-preset` and any presets be locked to a single version and
 [travis-icon]: https://travis-ci.org/BrandonOCasey/npm-preset.svg?branch=master
 [travis-link]: https://travis-ci.org/BrandonOCasey/npm-preset
 
-[npm-icon]: https://nodei.co/npm/npm-preset.js.png?downloads=true&downloadRank=true
+[npm-icon]: https://nodei.co/npm/npm-preset.png?downloads=true&downloadRank=true
 [npm-link]: https://nodei.co/npm/npm-preset/

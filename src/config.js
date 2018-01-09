@@ -68,7 +68,7 @@ const config = {
 if (!config.npmScripts.presets) {
   const packages = Object.keys(config.pkg.dependencies || {}).concat(Object.keys(config.pkg.devDependencies || {}));
 
-  config.npmScripts.presets = packages.filter((packageName) => (/^npm-scripts-preset-/).test(packageName));
+  config.npmScripts.presets = packages.filter((packageName) => (/npm-scripts-preset-.*$/).test(packageName));
 }
 
 config.npmScripts.presets = config.npmScripts.presets || [];

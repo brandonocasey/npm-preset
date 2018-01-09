@@ -299,6 +299,27 @@ test('invalid presets error', (t) => {
   });
 });
 
+test('presets can be found with scopes', (t) => {
+  t.plan(3);
+  const scripts = {touch: 'touch ./file.test'};
+
+  return t.context.addPreset('@test/npm-scripts-preset-test', scripts, false).then(() => {
+    return t.context.modifyPkg({dependencies: {'@test/npm-scripts-preset-test': '1.0.0'}});
+  }).then(() => {
+    return promiseSpawn('npms', ['--list'], {cwd: t.context.dir}).then((result) => {
+      let stdout = '';
+
+      stdout += '\n@test/npm-scripts-preset-test:\n';
+      stdout += '  "touch": "touch ./file.test"\n';
+      stdout += '\n';
+
+      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
+      t.is(result.stdout, stdout, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+});
+
 ['-ns', '--no-shorten'].forEach(function(o) {
   test(o, (t) => {
     const base = path.join(__dirname, '..', '..');

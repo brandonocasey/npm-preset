@@ -96,19 +96,23 @@ config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
   if (typeof preset === 'string') {
     preset = {name: preset};
   }
-  const nodeModules = path.join(config.root, 'node_modules');
 
-  if (!preset.path && pathExists(path.join(nodeModules, 'npm-scripts-preset-' + preset.name))) {
-    preset.name = 'npm-scripts-preset-' + preset.name;
-    preset.path = path.join(nodeModules, preset.name);
-  } else if (!preset.path && pathExists(path.join(nodeModules, preset.name))) {
-    preset.path = path.join(nodeModules, preset.name);
-  } else {
-    console.error('Could not find ' + preset.name + ', is it installed?');
-    process.exit(1);
+  if (!preset.path) {
+    const nodeModules = path.join(config.root, 'node_modules');
+
+    if (!preset.path && pathExists(path.join(nodeModules, 'npm-scripts-preset-' + preset.name))) {
+      preset.name = 'npm-scripts-preset-' + preset.name;
+      preset.path = path.join(nodeModules, preset.name);
+    } else if (!preset.path && pathExists(path.join(nodeModules, preset.name))) {
+      preset.path = path.join(nodeModules, preset.name);
+    } else {
+      console.error('Could not find ' + preset.name + ', is it installed?');
+      process.exit(1);
+    }
+
   }
 
-  let scripts = require(path.join(preset.path));
+  let scripts = require(preset.path);
 
   npmPath.setSync({cwd: preset.path});
 

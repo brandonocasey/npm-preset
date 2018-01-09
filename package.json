@@ -9,6 +9,7 @@
   "scripts": {
     "test:manual": "node test/scripts/setup.js",
     "test:clean": "node test/scripts/clean.js",
+    "prepublishOnly": "npm run test",
     "test": "ava test/unit/*.test.js"
   },
   "author": "brandonocasey <brandonocasey@gmail.com>",

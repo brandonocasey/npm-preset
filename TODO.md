@@ -1,7 +1,3 @@
-## Tests
-* sub args
-* complex author name
-
 ## Stretch Goals
 * error colors (emulate npm?)
 * Support a log file?

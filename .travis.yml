@@ -1,11 +1,7 @@
 sudo: false
 dist: trusty
 language: node_js
-node_js:
-  - 'lts/*'
-  - '6'
-after_success:
-  - nyc report --reporter=text-lcov | coveralls
+node_js: 'lts/*'
 
 # greenkeeper support
 before_install:
@@ -13,5 +9,8 @@ before_install:
   - npm install -g npm@5 # skip this if you are using node 9
   - npm install -g greenkeeper-lockfile@1
 before_script: greenkeeper-lockfile-update
-script: npm run test -- --verbose
+script: npm run cover -- --verbose --timeout 120s
 after_script: greenkeeper-lockfile-upload
+
+after_success:
+  - nyc report --reporter=text-lcov | coveralls

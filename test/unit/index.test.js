@@ -128,6 +128,17 @@ test.afterEach.always((t) => {
   });
 });
 
+test('object author is stringified', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({author: {name: 'test', email: 'test@email.com', url: 'http://email.com'}}).then(() => {
+    return promiseSpawn('npmp', ['--print-config'], {cwd: t.context.dir});
+  }).then((result) => {
+    const config = JSON.parse(result.stdout);
+
+    t.is(config.author, 'test <test@email.com> (http://email.com)', 'object author transformed');
+  });
+});
+
 ['-V', '--version'].forEach(function(o) {
   test(o, (t) => {
     t.plan(3);
@@ -425,9 +436,6 @@ test('should shorten preset paths with short name', (t) => {
   return t.context.addPreset('npm-preset-test', {echo: 'echo ' + base}).then(() => {
     return t.context.modifyPkg({'npm-preset': {presets: ['test']}});
   }).then(() => {
-    return promiseSpawn('npmp', ['--print-config'], {cwd: t.context.dir});
-  }).then((result) => {
-    t.log(result.stdout);
     return promiseSpawn('npmp', ['echo'], {cwd: t.context.dir});
   }).then((result) => {
     t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
@@ -507,6 +515,17 @@ test('stderr works', (t) => {
     return promiseSpawn('npmp', ['--no-shorten', 'echo'], {cwd: t.context.dir}).then((result) => {
       t.is(result.stderr.trim(), 'wat', 'stderr reported')
     });
+  });
+});
+
+test('sub args work', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', 'echo', '--', 'world'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello world'], 'sub args worked');
   });
 });
 
@@ -763,7 +782,7 @@ test('serial: second exit failure', (t) => {
 
   return t.context.modifyPkg({'npm-preset': {scripts: {
     one: 'echo test',
-    two: 'exit 1'
+    two: 'sleep 1 && exit 1'
   }}}).then(() => {
     return promiseSpawn('npmp', ['--commands-only', 'one', 'two'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
       t.is(result.stdout.trim(), 'test', 'test is printed');

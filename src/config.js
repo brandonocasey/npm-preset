@@ -26,11 +26,8 @@ const scope = appPkg.name.replace(name, '').replace(/\/$/, '');
 let author = appPkg.author || '';
 
 if (typeof appPkg.author === 'object') {
-  if (!appPkg.author.name) {
-    console.error('author must have a name key or be a string in package.json!');
-    console.error('See: https://docs.npmjs.com/files/package.json#people-fields-author-contributors');
-  }
   author = appPkg.author.name || '';
+
   if (appPkg.author.email) {
     author += ' <' + appPkg.author.email + '>';
   }

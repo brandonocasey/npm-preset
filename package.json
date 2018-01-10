@@ -11,7 +11,8 @@
     "test:manual": "node test/scripts/setup.js",
     "test:clean": "node test/scripts/clean.js",
     "prepublishOnly": "npm run test",
-    "test": "nyc ava test/unit/*.test.js",
+    "cover": "nyc ava test/unit/*.test.js",
+    "test": "ava test/unit/*.test.js",
     "posttest": "npm run lint",
     "lint": "eslint -c eslint-config-videojs src test/unit, test/scripts --rule '{max-len: 0}'",
     "prepush": "npm run lint"

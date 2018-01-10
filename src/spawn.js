@@ -14,10 +14,12 @@ const execa = require('execa');
  *          A promise that is resolved when the command exits
  */
 const spawn = function(command) {
-  const env = process.env;
+  const env = Object.assign({}, process.env);
 
   env.FORCE_COLOR = '1';
   env.NPM_PRESET_CONFIG = jsonConfig;
+
+  delete env.NPM_PRESET_COMMANDS_ONLY;
 
   const child = execa(command, {
     cwd: config.root,

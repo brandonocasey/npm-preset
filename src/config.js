@@ -58,19 +58,19 @@ const config = {
   root: appRoot,
   pkg: appPkg,
   scripts: {},
-  npmScripts: appPkg['npm-preset'] || {}
+  npmPreset: appPkg['npm-preset'] || {}
 };
 
 // if not presets are listed
 // see if we can find any installed presets
-if (!config.npmScripts.presets) {
+if (!config.npmPreset.presets) {
   const packages = Object.keys(config.pkg.dependencies || {}).concat(Object.keys(config.pkg.devDependencies || {}));
 
-  config.npmScripts.presets = packages.filter((packageName) => (/npm-preset-.*$/).test(packageName));
+  config.npmPreset.presets = packages.filter((packageName) => (/npm-preset-.*$/).test(packageName));
 }
 
-config.npmScripts.presets = config.npmScripts.presets || [];
-config.npmScripts.scripts = config.npmScripts.scripts || {};
+config.npmPreset.presets = config.npmPreset.presets || [];
+config.npmPreset.scripts = config.npmPreset.scripts || {};
 
 const pathExists = function(p) {
   try {
@@ -86,11 +86,11 @@ const addScript = function(scriptName, obj) {
   config.scripts[scriptName].push(obj);
 };
 
-Object.keys(config.npmScripts.scripts).forEach(function(scriptName) {
-  addScript(scriptName, {command: config.npmScripts.scripts[scriptName], source: 'npm-preset'});
+Object.keys(config.npmPreset.scripts).forEach(function(scriptName) {
+  addScript(scriptName, {command: config.npmPreset.scripts[scriptName], source: 'npm-preset'});
 });
 
-config.npmScripts.presets = config.npmScripts.presets.map(function(preset) {
+config.npmPreset.presets = config.npmPreset.presets.map(function(preset) {
   if (typeof preset === 'string') {
     preset = {name: preset};
   }

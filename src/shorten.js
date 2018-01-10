@@ -25,7 +25,7 @@ const shorten = function(str) {
     .replace(new RegExp(config.root + path.sep, 'g'), '')
     .replace(new RegExp(config.root, 'g'), '');
 
-  config.npmScripts.presets.forEach(function(preset) {
+  config.npmPreset.presets.forEach(function(preset) {
     str = str
       .replace(new RegExp(preset.path, 'g'), '<npmp-' + preset._shortname + '>')
       .replace(new RegExp(preset._realpath, 'g'), '<npmp-' + preset._shortname + '>')

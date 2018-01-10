@@ -11,6 +11,7 @@ const baseDir = path.join(__dirname, '..', '..');
 
 const promiseSpawn = function(bin, args, options = {}) {
   return new Promise((resolve, reject) => {
+    options = Object.assign({shell: true, stdio: 'pipe'}, options)
     const child = childProcess.spawn(bin, args, options);
     let stdout = '';
     let stderr = '';
@@ -133,6 +134,19 @@ test.afterEach.always((t) => {
     return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
       return promiseSpawn('npmp', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
         t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+        t.not(result.stdout.trim(), 0, 'stdout');
+        t.is(result.stderr.trim().length, 0, 'no stderr');
+      });
+    });
+  });
+});
+
+['-h', '--help'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(3);
+    return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
+      return promiseSpawn('npmp', [o, 'touch'], {cwd: t.context.dir}).then((result) => {
+        t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
         t.not(result.stdout.trim(), 0, 'stdout');
         t.is(result.stderr.trim().length, 0, 'no stderr');
       });
@@ -456,6 +470,42 @@ test('should shorten preset paths with long name', (t) => {
         t.is(result.stdout.trim(), '1', 'stdout of 1');
         t.is(result.stderr.trim().length, 0, 'no stderr');
       });
+    });
+  });
+});
+
+test('invalid script', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
+    return promiseSpawn('npmp', ['nope'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.not(result.exitCode, 0, 'did not succeed')
+    });
+  });
+});
+
+test('no scripts', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {}}}).then(() => {
+    return promiseSpawn('npmp', ['nope'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.not(result.exitCode, 0, 'did not succeed')
+    });
+  });
+});
+
+test('no script passed in', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
+    return promiseSpawn('npmp', [], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+      t.not(result.exitCode, 0, 'did not succeed')
+    });
+  });
+});
+
+test('stderr works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: '>&2 echo wat'}}}).then(() => {
+    return promiseSpawn('npmp', ['--no-shorten', 'echo'], {cwd: t.context.dir}).then((result) => {
+      t.is(result.stderr.trim(), 'wat', 'stderr reported')
     });
   });
 });

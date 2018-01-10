@@ -4,7 +4,6 @@
 const spawn = require('./spawn');
 const Promise = require('bluebird');
 const config = require('./config');
-const shellQuote = require('shell-quote');
 const scripts = config.scripts;
 
 /**
@@ -29,24 +28,12 @@ const scripts = config.scripts;
  *         A promise that is resolved when the script or command that was run finishes
  */
 const runCommand = function(scriptName, source, command, args) {
-  command = shellQuote.parse(command);
-  command = command.map(function(c) {
-    if (typeof c === 'object') {
-      if (c.op === 'glob') {
-        return c.pattern;
-      }
-
-      return c.op;
-    }
-    return c;
-  });
-  command = command.concat(args);
-
+  command = command + ' ' + args.join(' ');
   // mimic npm output
   if (!process.env || !process.env.NPM_PRESET_COMMANDS_ONLY) {
     console.log();
     console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' (' + source + ') ' + config.root);
-    console.log('> ' + command.join(' '));
+    console.log('> ' + command);
     console.log();
   }
 
@@ -77,7 +64,7 @@ const runScript = function(scriptName, args = []) {
       return resolve(runScript('pre' + scriptName));
     }
 
-    return resolve({exitCode: 0});
+    return resolve({code: 0});
   }).then(function(result) {
     // run any scripts with the same name in parallel
     return Promise.map(scripts[scriptName], (scriptObject) => {

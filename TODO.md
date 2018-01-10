@@ -1,13 +1,6 @@
 ## Tests
-* usage
 * sub args
-* no tasks
-* no scripts
 * complex author name
-* invalid script
-* stderr in child
-* child spawn error
-* killing parent kills child?
 
 ## Stretch Goals
 * error colors (emulate npm?)

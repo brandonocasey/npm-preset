@@ -20,7 +20,9 @@ const options = {
   tasks: [],
   subArgs: []
 };
-
+const final = (result) => {
+  process.exit(result.code);
+};
 const usage = function() {
   console.log();
   console.log(`  Usage: ${process.argv[1]}`);
@@ -167,25 +169,13 @@ if (cluster.isMaster) {
 
         worker.on('exit', function(code, signal) {
           if (code !== 0) {
-            reject({exitCode: code});
+            reject({code});
           }
-          resolve({exitCode: code});
+          resolve({code});
         });
       });
     });
-  }).then(function(result) {
-    if (result.exitCode !== 0) {
-      process.exit(result.exitCode);
-    }
-  }).catch(function(result) {
-    if (result.exitCode !== 0) {
-      process.exit(result.exitCode);
-    }
-  });
+  }).then(final).catch(final);
 } else {
-  runScript(process.env.scriptName).then(function(result) {
-    process.exit(result.exitCode);
-  }).catch(function(result) {
-    process.exit(result.exitCode);
-  });
+  runScript(process.env.scriptName).then(final).catch(final);
 }

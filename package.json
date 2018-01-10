@@ -7,6 +7,7 @@
     "npm-preset": "./src/npmp.js"
   },
   "scripts": {
+    "pretest:manual": "npm run test:clean",
     "test:manual": "node test/scripts/setup.js",
     "test:clean": "node test/scripts/clean.js",
     "prepublishOnly": "npm run test",
@@ -37,10 +38,10 @@
   },
   "dependencies": {
     "bluebird": "^3.5.0",
+    "execa": "^0.8.0",
     "find-root": "^1.1.0",
     "intercept-stdout": "^0.1.2",
-    "npm-path": "^2.0.4",
-    "shell-quote": "^1.6.1"
+    "npm-path": "^2.0.4"
   },
   "ava": {
     "timeout": "15s",

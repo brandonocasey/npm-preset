@@ -1,57 +1,39 @@
 const config = require('./config');
-const childProcess = require('child_process');
-const Promise = require('bluebird');
 const jsonConfig = JSON.stringify(config);
+const execa = require('execa');
 
 /**
  * Run a command on the terminal and attatch that command
  * to our current terminal. The output is also shortened to prevent
  * long absolute paths from leaking into the output.
  *
- * @param {Array} command
+ * @param {string} command
  *        The command to run in an array form.
  *
  * @returns {Promise}
  *          A promise that is resolved when the command exits
  */
 const spawn = function(command) {
-  process.setMaxListeners(1000);
+  const env = process.env;
 
-  return new Promise(function(resolve, reject) {
-    const env = process.env;
+  env.FORCE_COLOR = '1';
+  env.NPM_PRESET_CONFIG = jsonConfig;
 
-    env.NPM_PRESET_CONFIG = jsonConfig;
-    env.FORCE_COLOR = true;
-
-    const bin = command.shift();
-    let child = childProcess.spawn(bin, command, {cwd: config.root, env, shell: true});
-
-    child.stdout.on('data', function(chunk) {
-      process.stdout.write(chunk);
-    });
-
-    child.stderr.on('data', function(chunk) {
-      process.stderr.write(chunk);
-    });
-
-    child.on('error', function(error) {
-      throw error;
-    });
-
-    process.on('exit', function() {
-      if (child) {
-        child.kill();
-      }
-    });
-
-    child.on('close', function(exitCode) {
-      child = null;
-      if (exitCode !== 0) {
-        return reject({exitCode});
-      }
-      return resolve({exitCode});
-    });
+  const child = execa(command, {
+    cwd: config.root,
+    env,
+    shell: true
   });
+
+  child.stdout.on('data', function(chunk) {
+    process.stdout.write(chunk);
+  });
+
+  child.stderr.on('data', function(chunk) {
+    process.stderr.write(chunk);
+  });
+
+  return child;
 };
 
 module.exports = spawn;

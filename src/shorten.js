@@ -12,6 +12,7 @@ const path = require('path');
  *         The shortened string
  */
 const shorten = function(str) {
+  /* istanbul ignore if */
   if (!str) {
     return str;
   }

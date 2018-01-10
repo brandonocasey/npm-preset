@@ -11,6 +11,7 @@ npmPath.setSync()
  */
 let dir = process.cwd();
 
+/* istanbul ignore if */
 if (!path.isAbsolute(dir)) {
   dir = path.join(process.cwd(), dir);
 }

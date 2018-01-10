@@ -34,16 +34,9 @@ const runCommand = function(scriptName, source, command, args) {
     if (typeof c === 'object') {
       if (c.op === 'glob') {
         return c.pattern;
+      } else {
+        return c.op;
       }
-      if (c.op === ';') {
-        return ';';
-      }
-
-      if (c.op === '&&') {
-        return '&&';
-      }
-
-      console.warn(c.op + ' is not yet supported');
     }
     return c;
   });

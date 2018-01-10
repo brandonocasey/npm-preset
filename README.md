@@ -1,6 +1,6 @@
 # npm-preset
 [![Build Status][travis-icon]][travis-link]
-
+[![Coverage Status][coveralls-icon]][coveralls-link]
 [![NPM][npm-icon]][npm-link]
 
 ## Table of Contents
@@ -147,3 +147,7 @@ We recommend that `npm-preset` and any presets be locked to a single version and
 
 [npm-icon]: https://nodei.co/npm/npm-preset.png?downloads=true&downloadRank=true
 [npm-link]: https://nodei.co/npm/npm-preset/
+
+[coveralls-icon]: https://coveralls.io/repos/github/BrandonOCasey/npm-preset/badge.svg?branch=master
+[coveralls-link]: https://coveralls.io/github/BrandonOCasey/npm-preset?branch=master
+

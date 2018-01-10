@@ -30,7 +30,5 @@ node_modules/
 
 # Build-related directories
 dist/
-docs/api/
-test/dist/
-test/videojs-test-plugin/node_modules
-test/videojs-test-plugin/dist
+coverage/
+.nyc_output

@@ -10,7 +10,7 @@
     "test:manual": "node test/scripts/setup.js",
     "test:clean": "node test/scripts/clean.js",
     "prepublishOnly": "npm run test",
-    "test": "ava test/unit/*.test.js"
+    "test": "nyc ava test/unit/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,16 @@
     "src/",
     "test/"
   ],
+  "nyc": {
+    "cache": true,
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "test"
+    ]
+  },
   "dependencies": {
     "bluebird": "^3.5.0",
     "find-root": "^1.1.0",
@@ -41,6 +51,8 @@
   "devDependencies": {
     "ava": "^0.24.0",
     "babel-register": "^6.26.0",
+    "coveralls": "^3.0.0",
+    "nyc": "^11.4.1",
     "shelljs": "^0.7.8",
     "uuid": "^3.1.0"
   }

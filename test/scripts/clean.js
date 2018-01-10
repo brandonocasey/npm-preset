@@ -1,9 +1,9 @@
-var shelljs = require('shelljs');
-var path = require('path');
-var fs = require('fs');
+const shelljs = require('shelljs');
+const path = require('path');
+const fs = require('fs');
 
-var baseDir = path.join(__dirname, '..', '..');
-var testPkgDir = path.join(baseDir, 'test', 'fixtures', 'test-pkg-main');
+const baseDir = path.join(__dirname, '..', '..');
+const testPkgDir = path.join(baseDir, 'test', 'fixtures', 'test-pkg-main');
 
 shelljs.rm('-rf', testPkgDir);
 shelljs.mkdir('-p', testPkgDir);

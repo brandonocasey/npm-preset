@@ -4,7 +4,6 @@
 * no tasks
 * no scripts
 * complex author name
-* non absolute cwd?
 * invalid script
 * stderr in child
 * child spawn error

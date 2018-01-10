@@ -34,9 +34,9 @@ const runCommand = function(scriptName, source, command, args) {
     if (typeof c === 'object') {
       if (c.op === 'glob') {
         return c.pattern;
-      } else {
-        return c.op;
       }
+
+      return c.op;
     }
     return c;
   });

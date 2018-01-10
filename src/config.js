@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const npmPath = require('npm-path');
 
-npmPath.setSync()
+npmPath.setSync();
 /**
  * The config contains anything that might be needed from the package.json
  * of the project that is using npm script.

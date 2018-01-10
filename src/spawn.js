@@ -25,13 +25,8 @@ const spawn = function(command) {
     shell: true
   });
 
-  child.stdout.on('data', function(chunk) {
-    process.stdout.write(chunk);
-  });
-
-  child.stderr.on('data', function(chunk) {
-    process.stderr.write(chunk);
-  });
+  child.stdout.pipe(process.stdout);
+  child.stderr.pipe(process.stderr);
 
   return child;
 };

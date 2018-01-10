@@ -5,4 +5,12 @@ node_js:
   - 'lts/*'
   - '6'
 after_success:
-  - ./node_modules/.bin/nyc report | ./node_modules/.bin/coveralls
+  - nyc report --reporter=text-lcov | coveralls
+
+# greenkeeper support
+before_install:
+  # package-lock.json was introduced in npm@5
+  - npm install -g npm@5 # skip this if you are using node 9
+  - npm install -g greenkeeper-lockfile@1
+before_script: greenkeeper-lockfile-update
+after_script: greenkeeper-lockfile-upload

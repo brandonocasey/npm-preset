@@ -1,10 +1,10 @@
-import test from 'ava';
-import path from 'path';
-import uuid from 'uuid';
-import fs from 'fs';
-import shelljs from 'shelljs';
-import childProcess from 'child_process';
-import Promise from 'bluebird';
+const test = require('ava');
+const path = require('path');
+const uuid = require('uuid');
+const fs = require('fs');
+const shelljs = require('shelljs');
+const childProcess = require('child_process');
+const Promise = require('bluebird');
 
 const fixtureDir = path.join(__dirname, '..', 'fixtures', 'test-pkg-main');
 const baseDir = path.join(__dirname, '..', '..');

@@ -2,6 +2,20 @@ const config = require('./config');
 const path = require('path');
 const intercept = require('intercept-stdout');
 
+// prebuild shorten regexes
+const regexes = [
+  {find: RegExp(config.root + path.sep, 'g'), replace: ''},
+  {find: RegExp(config.root, 'g'), replace: ''}
+];
+
+config.npmPreset.presets.forEach(function(preset) {
+  regexes.push({find: RegExp(preset.path, 'g'), replace: '<npmp-' + preset._shortname + '>'});
+  regexes.push({find: RegExp(preset._realpath, 'g'), replace: '<npmp-' + preset._shortname + '>'});
+  regexes.push({find: RegExp(preset._localpath, 'g'), replace: '<npmp-' + preset._shortname + '>'});
+});
+
+regexes.push({find: RegExp(path.join(__dirname, '..'), 'g'), replace: '<npmp>'});
+
 /**
  * shorten npm-preset paths so that we dont print
  * obnoxiously long path strings to terminal
@@ -22,22 +36,15 @@ const shorten = function(str) {
     str = str.toString();
   }
 
-  str = str
-    .replace(new RegExp(config.root + path.sep, 'g'), '')
-    .replace(new RegExp(config.root, 'g'), '');
-
-  config.npmPreset.presets.forEach(function(preset) {
-    str = str
-      .replace(new RegExp(preset.path, 'g'), '<npmp-' + preset._shortname + '>')
-      .replace(new RegExp(preset._realpath, 'g'), '<npmp-' + preset._shortname + '>')
-      .replace(new RegExp(preset._localpath, 'g'), '<npmp-' + preset._shortname + '>');
+  regexes.forEach(function(regex) {
+    str = str.replace(regex.find, regex.replace);
   });
-
-  str = str.replace(new RegExp(path.join(__dirname, '..'), 'g'), '<npmp>');
   return str;
 };
 
 const filter = function(options) {
+  options = options || {};
+
   let stderrFilter = (s) => s;
   let stdoutFilter = (s) => s;
 

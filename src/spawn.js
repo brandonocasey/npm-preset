@@ -1,5 +1,5 @@
 const config = require('./config');
-const jsonConfig = JSON.stringify(config);
+const jsonConfig = process.env.NPM_PRESET_CONFIG || JSON.stringify(config);
 const execa = require('execa');
 
 /**

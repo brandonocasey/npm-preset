@@ -59,13 +59,13 @@ const runScript = function(scriptName, args = []) {
     process.exit(1);
   }
 
-  return new Promise(function(resolve, reject) {
-    if (scripts['pre' + scriptName]) {
-      return resolve(runScript('pre' + scriptName));
-    }
+  let p = Promise.resolve({code: 0});
 
-    return resolve({code: 0});
-  }).then(function(result) {
+  if (scripts['pre' + scriptName]) {
+    p = runScript('pre' + scriptName);
+  }
+
+  return p.then(function(result) {
     // run any scripts with the same name in parallel
     return Promise.map(scripts[scriptName], (scriptObject) => {
       return runCommand(scriptName, scriptObject.source, scriptObject.command, args);

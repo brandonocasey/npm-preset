@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable max-len */
 
-const spawn = require('./spawn');
+const exec = require('./exec');
 const Promise = require('bluebird');
 const config = require('./config');
 const scripts = config.scripts;
@@ -37,7 +37,7 @@ const runCommand = function(scriptName, source, command, args) {
     console.log();
   }
 
-  return spawn(command);
+  return exec(command);
 };
 
 /**

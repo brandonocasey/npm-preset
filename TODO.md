@@ -1,3 +1,6 @@
+## MUST DO
+* verify the PATH changes
+
 ## Stretch Goals
 * error colors (emulate npm?)
 * Support a log file?

@@ -8,7 +8,7 @@
 
 ## Table of Contents
 
-* [Benefits over vanilla npm scripts](#benefits-over-vanilla-npm-preset)
+* [Benefits over vanilla npm scripts](#benefits-over-vanilla-npm-scripts)
 * [Usage](#usage)
 * [What is this?](#what-is-this)
 * [Why do do need this?](#why-do-do-need-this)
@@ -16,8 +16,10 @@
   * [Presets:](#presets)
   * [Configuring a Preset](#configuring-a-preset)
 * [Writing Presets](#writing-presets)
+  * [Formats](#formats)
+  * [Things to know:](#things-to-know)
+  * [Examples](#examples)
 * [The npm-preset "config"](#the-npm-preset-config)
-* [Recommendations](#recommendations)
 
 ## Benefits over vanilla npm scripts
 
@@ -117,16 +119,22 @@ Example: (you would not want to include configuration for the same preset twice,
 
 ## Writing Presets
 
+### Formats
+
 Presets can be written in three formats:
 
 * A JavaScript file that exports an object containing scripts
 * A JSON file that contains an object with scripts
 * A JavaScript function that returns an object containing scripts. It takes one argument: the current npm-preset config.
 
-Things to know:
+### Things to know:
 
 * if you need to pass config files during a command you will want to use absolute paths to do so.
 * When a script is run process.env.NPM_PRESET_CONFIG will be set to the current `npm-preset` config. This should allow you to use any of the special variables from that file just about anywhere (babel config, rollup config, a random npm script)
+
+### Examples
+
+* <https://github.com/BrandonOCasey/npm-preset-videojs>
 
 ## The npm-preset "config"
 
@@ -141,16 +149,14 @@ This is not really a config, its more of a useful state object that is passed ar
 * npmScript: The final npmScript config, after small modification have been done and `pkg['npm-preset']` has been taken into account.
 * scripts: This starts with the scripts from the current package, from there presets are merged into this script list
 
-## Recommendations
-
-We recommend that `npm-preset` and any presets be locked to a single version and not a version range. We then recommend that `greenkeeper` be enabled so that it can submit prs for to update `npm-preset`. This will prevent your build pipeline from changing out from under you and from any break that may be possible.
-
 [travis-icon]: https://travis-ci.org/BrandonOCasey/npm-preset.svg?branch=master
+
 [travis-link]: https://travis-ci.org/BrandonOCasey/npm-preset
 
 [npm-icon]: https://nodei.co/npm/npm-preset.png?downloads=true&downloadRank=true
+
 [npm-link]: https://nodei.co/npm/npm-preset/
 
 [coveralls-icon]: https://coveralls.io/repos/github/BrandonOCasey/npm-preset/badge.svg?branch=master
-[coveralls-link]: https://coveralls.io/github/BrandonOCasey/npm-preset?branch=master
 
+[coveralls-link]: https://coveralls.io/github/BrandonOCasey/npm-preset?branch=master

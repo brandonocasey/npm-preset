@@ -109,7 +109,7 @@ if (cluster.isMaster) {
   }
 
   if (!config.scripts || !Object.keys(config.scripts).length) {
-    console.error('There are no npm scripts to run, please add some!');
+    console.error('There are no npmp scripts to run, please add some!');
     process.exit(1);
   }
 
@@ -153,8 +153,7 @@ if (cluster.isMaster) {
 
     return Promise.map(task.scripts, (s) => {
       return new Promise((resolve, reject) => {
-        const worker = cluster.fork({
-          NPM_PRESET_SCRIPT_NAME: s, NPM_PRESET_SUB_ARGS: jsonSubArgs});
+        const worker = cluster.fork({NPM_PRESET_SCRIPT_NAME: s, NPM_PRESET_SUB_ARGS: jsonSubArgs});
 
         worker.on('exit', function(code, signal) {
           if (code !== 0) {

@@ -1,4 +1,6 @@
 # npm-preset
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/BrandonOCasey/npm-preset.svg)](https://greenkeeper.io/)
 [![Build Status][travis-icon]][travis-link]
 [![Coverage Status][coveralls-icon]][coveralls-link]
 [![NPM][npm-icon]][npm-link]

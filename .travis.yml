@@ -14,3 +14,7 @@ after_script: greenkeeper-lockfile-upload
 
 after_success:
   - nyc report --reporter=text-lcov | coveralls
+
+cache:
+  directories:
+    - node_modules

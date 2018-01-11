@@ -193,8 +193,8 @@ test('object author is stringified', (t) => {
 
 test('scripts from different sources run in parallel', (t) => {
   t.plan(2);
-  return t.context.addPreset('npm-preset-test', {echo: 'sleep 1 && echo preset-echo'}).then(() => {
-    return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'sleep 3 && echo npmp-echo'}}, 'scripts': {echo: 'sleep 2 && echo scripts-echo'}});
+  return t.context.addPreset('npm-preset-test', {echo: 'echo preset-echo'}).then(() => {
+    return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'sleep 1 && echo npmp-echo'}}});
   }).then(() => {
     return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
@@ -529,10 +529,21 @@ test('stderr works', (t) => {
   });
 });
 
-test('sub args work', (t) => {
+test('serial: subargs work', (t) => {
   t.plan(1);
   return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello'}}}).then(() => {
     return promiseSpawn('npmp', ['-co', 'echo', '--', 'world'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello world'], 'sub args worked');
+  });
+});
+
+test('parallel: subargs work', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', '-p', 'echo', '--', 'world'], {cwd: t.context.dir});
   }).then((result) => {
     const stdouts = result.stdout.trim().split('\n');
 

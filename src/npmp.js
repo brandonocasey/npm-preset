@@ -1,49 +1,49 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 /* eslint-disable max-len */
-const pkg = require('../package.json');
+// deps used by master and worker
 const cluster = require('cluster');
-const config = require('./config');
 const runScript = require('./run-script');
-const Promise = require('bluebird');
-const scriptMatches = require('./script-matches');
+const final = (result) => process.exit(result.code);
 const filter = require('./filter');
-const options = {
-  version: false,
-  help: false,
-  list: false,
-  quiet: false,
-  silent: false,
-  commandsOnly: false,
-  printConfig: false,
-  shorten: true,
-  tasks: [],
-  subArgs: []
-};
-const final = (result) => {
-  process.exit(result.code);
-};
-const usage = function() {
-  console.log();
-  console.log(`  Usage: ${process.argv[1]}`);
-  console.log();
-  console.log('  > Note: by default script name args will be treated as series');
-  console.log('  > Note2: script name args can use wild cards such as build:*');
-  console.log();
-  console.log('  -p,  --parallel [scripts...]     Run specified scripts in parallel');
-  console.log('  -s,  --series   [scripts...]     Run specified scripts in series');
-  console.log('  -V,  --version                   Print version and exit');
-  console.log('  -h,  --help                      Print usage and exit');
-  console.log('  -q,  --quiet                     Only print errors and warnings');
-  console.log('  -l,  --list                      Print available scripts and exit');
-  console.log('  -si, --silent                    Do not print anything');
-  console.log('  -co, --commands-only             Only print errors, warnings, and script output');
-  console.log('  -pc, --print-config              Print the npm-preset config and exit');
-  console.log('  -ns, --no-shorten                Do not shorten paths in stdout/stderr');
-  console.log();
-};
 
 if (cluster.isMaster) {
+  const pkg = require('../package.json');
+  const config = require('./config');
+  const Promise = require('bluebird');
+  const scriptMatches = require('./script-matches');
+  const options = {
+    version: false,
+    help: false,
+    list: false,
+    quiet: false,
+    silent: false,
+    commandsOnly: false,
+    printConfig: false,
+    shorten: true,
+    tasks: [],
+    subArgs: []
+  };
+  const usage = function() {
+    console.log();
+    console.log(`  Usage: ${process.argv[1]}`);
+    console.log();
+    console.log('  > Note: by default script name args will be treated as series');
+    console.log('  > Note2: script name args can use wild cards such as build:*');
+    console.log();
+    console.log('  -p,  --parallel [scripts...]     Run specified scripts in parallel');
+    console.log('  -s,  --series   [scripts...]     Run specified scripts in series');
+    console.log('  -V,  --version                   Print version and exit');
+    console.log('  -h,  --help                      Print usage and exit');
+    console.log('  -q,  --quiet                     Only print errors and warnings');
+    console.log('  -l,  --list                      Print available scripts and exit');
+    console.log('  -si, --silent                    Do not print anything');
+    console.log('  -co, --commands-only             Only print errors, warnings, and script output');
+    console.log('  -pc, --print-config              Print the npm-preset config and exit');
+    console.log('  -ns, --no-shorten                Do not shorten paths in stdout/stderr');
+    console.log();
+  };
+
   const index = process.argv.indexOf('--');
 
   if (index !== -1) {
@@ -142,6 +142,9 @@ if (cluster.isMaster) {
     process.exit(1);
   }
 
+  // stored so we do not do it in the loop below
+  const jsonSubArgs = JSON.stringify(options.subArgs);
+
   // run through each task, before going to the next one
   Promise.mapSeries(options.tasks, function(task) {
     if (task.type === 'series') {
@@ -150,7 +153,8 @@ if (cluster.isMaster) {
 
     return Promise.map(task.scripts, (s) => {
       return new Promise((resolve, reject) => {
-        const worker = cluster.fork({scriptName: s});
+        const worker = cluster.fork({
+          NPM_PRESET_SCRIPT_NAME: s, NPM_PRESET_SUB_ARGS: jsonSubArgs});
 
         worker.on('exit', function(code, signal) {
           if (code !== 0) {
@@ -163,6 +167,6 @@ if (cluster.isMaster) {
   }).then(final).catch(final);
 } else {
   // have to re-filter stdout/stderr for forks
-  filter(options);
-  runScript(process.env.scriptName).then(final).catch(final);
+  filter();
+  runScript(process.env.NPM_PRESET_SCRIPT_NAME, JSON.parse(process.env.NPM_PRESET_SUB_ARGS)).then(final).catch(final);
 }

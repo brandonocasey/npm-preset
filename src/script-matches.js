@@ -7,8 +7,10 @@ const scriptMatches = function(scriptName) {
 
   scriptName = scriptName.replace('*', '');
 
+  const regex = RegExp(`^${scriptName}[^:]*$`);
+
   return Object.keys(config.scripts)
-    .filter((name) => (new RegExp(`^${scriptName}[^:]*$`)).test(name));
+    .filter((name) => regex.test(name));
 };
 
 module.exports = scriptMatches;

@@ -101,7 +101,7 @@ if (process.env.NPM_PRESET_CONFIG) {
       } else if (!preset.path && pathExists(path.join(nodeModules, preset.name))) {
         preset.path = path.join(nodeModules, preset.name);
       } else {
-        console.error('Could not find ' + preset.name + ', is it installed?');
+        console.error('ERROR: Could not find ' + preset.name + ', is it installed?');
         process.exit(1);
       }
 
@@ -113,6 +113,11 @@ if (process.env.NPM_PRESET_CONFIG) {
 
     if (typeof scripts === 'function') {
       scripts = scripts(config);
+    }
+
+    if (typeof scripts !== 'object' || Object.keys(scripts).length === 0) {
+      console.error('ERROR: ' + preset.name + ' does not export any scripts');
+      process.exit(1);
     }
 
     Object.keys(scripts).forEach(function(scriptName) {

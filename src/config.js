@@ -7,10 +7,11 @@ if (process.env.NPM_PRESET_CONFIG) {
   const findRoot = require('find-root');
   const path = require('path');
   const fs = require('fs');
-  const npmPath = require('npm-path');
   const pathExists = require('./path-exists');
+  const PATH = process.env.PATH.split(':');
 
-  npmPath.setSync();
+  PATH.unshift(path.join(__dirname, 'node_modules', '.bin'));
+
   /**
   * The config contains anything that might be needed from the package.json
   * of the project that is using npm script.
@@ -23,9 +24,6 @@ if (process.env.NPM_PRESET_CONFIG) {
   }
 
   const appRoot = findRoot(dir);
-
-  npmPath.setSync({cwd: appRoot});
-
   const appPkg = require(path.join(dir, 'package.json'));
   const name = appPkg.name.replace(/^@.+\//, '');
   const scope = appPkg.name.replace(name, '').replace(/\/$/, '');
@@ -42,11 +40,6 @@ if (process.env.NPM_PRESET_CONFIG) {
     }
   }
 
-  appPkg.author = author;
-  appPkg.fullName = appPkg.name;
-  appPkg.name = name;
-  appPkg.scope = scope;
-
   const moduleName = name.split('-').map(function(item, index) {
     if (index === 0) {
       return item;
@@ -59,8 +52,8 @@ if (process.env.NPM_PRESET_CONFIG) {
   config = {
     author,
     name,
-    moduleName,
     scope,
+    moduleName,
     root: appRoot,
     pkg: appPkg,
     scripts: {},
@@ -109,7 +102,7 @@ if (process.env.NPM_PRESET_CONFIG) {
 
     let scripts = require(preset.path);
 
-    npmPath.setSync({cwd: preset.path});
+    PATH.unshift(path.join(preset.path, 'node_modules', '.bin'));
 
     if (typeof scripts === 'function') {
       scripts = scripts(config);
@@ -130,6 +123,14 @@ if (process.env.NPM_PRESET_CONFIG) {
 
     return preset;
   });
+
+  // put the path to config.root first as that is the local project and should have
+  // priority
+  PATH.unshift(path.join(config.root, 'node_modules', '.bin'));
+
+  process.env.PATH = PATH.join(':');
+  process.env.NPM_PRESET_CONFIG = JSON.stringify(config);
+  process.env.FORCE_COLOR = 1;
 }
 
 module.exports = config;

@@ -39,10 +39,8 @@
   },
   "dependencies": {
     "bluebird": "^3.5.0",
-    "execa": "^0.8.0",
     "find-root": "^1.1.0",
-    "intercept-stdout": "^0.1.2",
-    "npm-path": "^2.0.4"
+    "intercept-stdout": "^0.1.2"
   },
   "ava": {
     "timeout": "15s"

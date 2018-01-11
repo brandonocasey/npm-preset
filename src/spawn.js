@@ -19,8 +19,6 @@ const spawn = function(command) {
   env.FORCE_COLOR = '1';
   env.NPM_PRESET_CONFIG = jsonConfig;
 
-  delete env.NPM_PRESET_COMMANDS_ONLY;
-
   const child = execa(command, {
     cwd: config.root,
     env,

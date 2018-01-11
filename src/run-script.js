@@ -30,7 +30,7 @@ const scripts = config.scripts;
 const runCommand = function(scriptName, source, command, args) {
   command = command + ' ' + args.join(' ');
   // mimic npm output
-  if (!process.env || !process.env.NPM_PRESET_COMMANDS_ONLY) {
+  if (!process.env.NPM_PRESET_COMMANDS_ONLY || process.env.NPM_PRESET_COMMANDS_ONLY !== '1') {
     console.log();
     console.log('> ' + config.name + '@' + config.pkg.version + ' ' + scriptName + ' (' + source + ') ' + config.root);
     console.log('> ' + command);

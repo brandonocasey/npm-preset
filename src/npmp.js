@@ -5,15 +5,15 @@ const pkg = require('../package.json');
 const cluster = require('cluster');
 const config = require('./config');
 const runScript = require('./run-script');
-const shorten = require('./shorten');
-const intercept = require('intercept-stdout');
 const Promise = require('bluebird');
 const scriptMatches = require('./script-matches');
+const filter = require('./filter');
 const options = {
   version: false,
   help: false,
   list: false,
   quiet: false,
+  silent: false,
   commandsOnly: false,
   printConfig: false,
   shorten: true,
@@ -36,6 +36,7 @@ const usage = function() {
   console.log('  -h,  --help                      Print usage and exit');
   console.log('  -q,  --quiet                     Only print errors and warnings');
   console.log('  -l,  --list                      Print available scripts and exit');
+  console.log('  -si, --silent                    Do not print anything');
   console.log('  -co, --commands-only             Only print errors, warnings, and script output');
   console.log('  -pc, --print-config              Print the npm-preset config and exit');
   console.log('  -ns, --no-shorten                Do not shorten paths in stdout/stderr');
@@ -60,6 +61,8 @@ if (cluster.isMaster) {
       options.help = true;
     } else if ((/^(-q|--quiet)$/).test(arg)) {
       options.quiet = true;
+    } else if ((/^(-si|--silent)$/).test(arg)) {
+      options.silent = true;
     } else if ((/^(-V|--version)$/).test(arg)) {
       options.version = true;
     } else if ((/^(-l|--list$)/).test(arg)) {
@@ -93,21 +96,7 @@ if (cluster.isMaster) {
     process.exit(0);
   }
 
-  let stderrFilter = (s) => s;
-  let stdoutFilter = (s) => s;
-
-  if (options.shorten) {
-    // shorten stdout and stderr
-    stderrFilter = shorten;
-    stdoutFilter = shorten;
-  }
-
-  if (options.quiet) {
-    // never print stdout
-    stdoutFilter = (s) => '';
-  }
-
-  intercept(stdoutFilter, stderrFilter);
+  filter(options);
 
   if (options.version) {
     console.log(pkg.version);
@@ -117,10 +106,6 @@ if (cluster.isMaster) {
   if (options.help) {
     usage();
     process.exit();
-  }
-
-  if (options.commandsOnly) {
-    process.env.NPM_PRESET_COMMANDS_ONLY = true;
   }
 
   if (!config.scripts || !Object.keys(config.scripts).length) {
@@ -177,5 +162,7 @@ if (cluster.isMaster) {
     });
   }).then(final).catch(final);
 } else {
+  // have to re-filter stdout/stderr for forks
+  filter(options);
   runScript(process.env.scriptName).then(final).catch(final);
 }

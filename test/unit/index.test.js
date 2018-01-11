@@ -697,6 +697,23 @@ test('parallel: nested', (t) => {
   });
 });
 
+test('deeply nested', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {
+    'test': 'npmp test:one',
+    'test:one': 'npmp test:one:one test:one:two',
+    'test:one:one': 'echo 1',
+    'test:one:two': 'echo 2',
+  }}}).then(() => {
+    return promiseSpawn('npmp', ['--commands-only', 'test'], {cwd: t.context.dir}).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(stdouts, ['1', '2'], 'runs deeply nested');
+    });
+  });
+});
+
+
 test('verify serial default', (t) => {
   t.plan(1);
   return t.context.modifyPkg({'npm-preset': {scripts: {

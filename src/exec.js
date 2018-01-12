@@ -1,6 +1,6 @@
 const config = require('./config');
 const Promise = require('bluebird');
-const exec = require('child_process').exec;
+const childProcess = require('child_process');
 
 /**
  * Run a command on the terminal and attatch that command
@@ -13,9 +13,9 @@ const exec = require('child_process').exec;
  * @returns {Promise}
  *          A promise that is resolved when the command exits
  */
-const spawn = function(command) {
+const exec = function(command) {
   return new Promise((resolve, reject) => {
-    const child = exec(command, {
+    const child = childProcess.exec(command, {
       cwd: config.root,
       env: process.env,
       shell: true
@@ -23,6 +23,11 @@ const spawn = function(command) {
 
     child.stdout.pipe(process.stdout);
     child.stderr.pipe(process.stderr);
+    const kill = () => child.kill();
+
+    process.on('SIGINT', kill);
+    process.on('SIGQUIT', kill);
+    process.on('exit', kill);
 
     child.on('close', function(code, signal) {
       if (code === 0) {
@@ -36,4 +41,4 @@ const spawn = function(command) {
   });
 };
 
-module.exports = spawn;
+module.exports = exec;

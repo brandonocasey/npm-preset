@@ -6,12 +6,14 @@ const shelljs = require('shelljs');
 const childProcess = require('child_process');
 const Promise = require('bluebird');
 
+process.setMaxListeners(1000);
+
 const fixtureDir = path.join(__dirname, '..', 'fixtures', 'test-pkg-main');
 const baseDir = path.join(__dirname, '..', '..');
 
 const promiseSpawn = function(bin, args, options = {}) {
   return new Promise((resolve, reject) => {
-    options = Object.assign({shell: true, stdio: 'pipe'}, options)
+    options = Object.assign({shell: true, stdio: 'pipe'}, options);
     const child = childProcess.spawn(bin, args, options);
     let stdout = '';
     let stderr = '';
@@ -30,6 +32,11 @@ const promiseSpawn = function(bin, args, options = {}) {
       out += str;
       stderr += str;
     });
+    const kill = () => child.kill();
+
+    process.on('SIGINT', kill);
+    process.on('SIGQUIT', kill);
+    process.on('exit', kill);
 
     child.on('close', (exitCode) => {
       if (!options.ignoreExitCode && exitCode !== 0) {
@@ -445,7 +452,7 @@ test('should shorten preset paths with long name', (t) => {
 ['-q', '--quiet'].forEach(function(o) {
   test(o, (t) => {
     t.plan(2);
-    return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'npmp echo2', echo2:'echo hello && echo no 1>&2'}}}).then(() => {
+    return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'npmp echo2', echo2: 'echo hello && echo no 1>&2'}}}).then(() => {
       return promiseSpawn('npmp', [o, 'echo'], {cwd: t.context.dir}).then((result) => {
         t.is(result.stdout.trim().length, 0, 'no stdout');
         t.is(result.stderr.trim(), 'no', 'stderr');
@@ -497,7 +504,7 @@ test('invalid script', (t) => {
   t.plan(1);
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npmp', ['nope'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
-      t.not(result.exitCode, 0, 'did not succeed')
+      t.not(result.exitCode, 0, 'did not succeed');
     });
   });
 });
@@ -506,7 +513,7 @@ test('no scripts', (t) => {
   t.plan(1);
   return t.context.modifyPkg({'npm-preset': {scripts: {}}}).then(() => {
     return promiseSpawn('npmp', ['nope'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
-      t.not(result.exitCode, 0, 'did not succeed')
+      t.not(result.exitCode, 0, 'did not succeed');
     });
   });
 });
@@ -515,7 +522,7 @@ test('no script passed in', (t) => {
   t.plan(1);
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npmp', [], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
-      t.not(result.exitCode, 0, 'did not succeed')
+      t.not(result.exitCode, 0, 'did not succeed');
     });
   });
 });
@@ -524,7 +531,7 @@ test('stderr works', (t) => {
   t.plan(1);
   return t.context.modifyPkg({'npm-preset': {scripts: {echo: '>&2 echo wat'}}}).then(() => {
     return promiseSpawn('npmp', ['--no-shorten', 'echo'], {cwd: t.context.dir}).then((result) => {
-      t.is(result.stderr.trim(), 'wat', 'stderr reported')
+      t.is(result.stderr.trim(), 'wat', 'stderr reported');
     });
   });
 });
@@ -714,7 +721,7 @@ test('deeply nested', (t) => {
     'test': 'npmp test:one',
     'test:one': 'npmp test:one:one test:one:two',
     'test:one:one': 'echo 1',
-    'test:one:two': 'echo 2',
+    'test:one:two': 'echo 2'
   }}}).then(() => {
     return promiseSpawn('npmp', ['--commands-only', 'test'], {cwd: t.context.dir}).then((result) => {
       const stdouts = result.stdout.trim().split('\n');
@@ -723,7 +730,6 @@ test('deeply nested', (t) => {
     });
   });
 });
-
 
 test('verify serial default', (t) => {
   t.plan(1);

@@ -14,7 +14,7 @@
     "cover": "nyc ava test/unit/*.test.js",
     "test": "ava test/unit/*.test.js",
     "posttest": "npm run lint",
-    "lint": "eslint -c eslint-config-videojs src test/unit, test/scripts --rule '{max-len: 0}'",
+    "lint": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",
     "prepush": "npm run lint"
   },
   "repository": {

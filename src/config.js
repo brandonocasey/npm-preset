@@ -131,6 +131,7 @@ if (process.env.NPM_PRESET_CONFIG) {
   process.env.PATH = PATH.join(':');
   process.env.NPM_PRESET_CONFIG = JSON.stringify(config);
   process.env.FORCE_COLOR = 1;
+  process.setMaxListeners(1000);
 }
 
 module.exports = config;

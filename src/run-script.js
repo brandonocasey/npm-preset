@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 /* eslint-disable max-len */
 
-const exec = require('./exec');
-const Promise = require('bluebird');
-const config = require('./config');
+import exec from './exec';
+import Promise from 'bluebird';
+import config from './config';
 const scripts = config.scripts;
 
 /**
@@ -78,4 +78,4 @@ const runScript = function(scriptName, args = []) {
   });
 };
 
-module.exports = runScript;
+export default runScript;

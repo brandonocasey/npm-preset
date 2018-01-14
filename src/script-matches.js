@@ -1,4 +1,4 @@
-const config = require('./config');
+import config from './config';
 
 const scriptMatches = function(scriptName) {
   if (!(/\*/).test(scriptName)) {
@@ -13,4 +13,4 @@ const scriptMatches = function(scriptName) {
     .filter((name) => regex.test(name));
 };
 
-module.exports = scriptMatches;
+export default scriptMatches;

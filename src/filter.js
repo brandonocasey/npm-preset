@@ -1,17 +1,40 @@
-const config = require('./config');
-const path = require('path');
-const intercept = require('intercept-stdout');
+import config from './config';
+import path from 'path';
+
+const intercept = function(stdoutIntercept, stderrIntercept) {
+  const interceptors = {
+    stderr: stderrIntercept || stdoutIntercept,
+    stdout: stdoutIntercept
+  };
+  const oldWrite = {
+    stdout: process.stdout.write,
+    stderr: process.stderr.write
+  };
+
+  Object.keys(interceptors).forEach((fd) => {
+    process[fd].write = function(...args) {
+      args[0] = interceptors[fd](args[0], stdoutIntercept);
+
+      oldWrite[fd].apply(process[fd], args);
+    };
+  });
+
+  // restore
+  return () => Object.keys(oldWrite).forEach((fd) => {
+    process[fd].write = oldWrite[fd];
+  });
+};
 
 // prebuild shorten regexes
 const regexes = [
-  {find: RegExp(config.root + path.sep, 'g'), replace: ''},
-  {find: RegExp(config.root, 'g'), replace: ''}
+  {find: RegExp(`${config.root}${path.sep}?`, 'g'), replace: ''}
 ];
 
-config.npmPreset.presets.forEach(function(preset) {
-  regexes.push({find: RegExp(preset.path, 'g'), replace: '<npmp-' + preset._shortname + '>'});
-  regexes.push({find: RegExp(preset._realpath, 'g'), replace: '<npmp-' + preset._shortname + '>'});
-  regexes.push({find: RegExp(preset._localpath, 'g'), replace: '<npmp-' + preset._shortname + '>'});
+config.npmPreset.presets.forEach(function(p) {
+  regexes.push({
+    find: RegExp(`${p.path}|${p._realpath}|${p._localpath}`, 'g'),
+    replace: `<npmp-${p._shortname}>`
+  });
 });
 
 regexes.push({find: RegExp(path.join(__dirname, '..'), 'g'), replace: '<npmp>'});
@@ -78,4 +101,4 @@ const filter = function(options) {
   intercept(stdoutFilter, stderrFilter);
 };
 
-module.exports = filter;
+export default filter;

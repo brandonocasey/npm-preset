@@ -3,19 +3,23 @@
   "version": "1.2.0",
   "description": "Faster, sharable, and parallel npm scripts",
   "bin": {
-    "npmp": "./src/npmp.js",
-    "npm-preset": "./src/npmp.js"
+    "npmp": "./dist/npmp.js",
+    "npm-preset": "./dist/npmp.js"
   },
   "scripts": {
-    "pretest:manual": "npm run test:clean",
+    "watch": "rollup -c rollup.config.js -w",
+    "build": "rollup -c rollup.config.js && chmod +x dist/*",
+    "pretest:manual": "npm run test:clean && npm run build",
     "test:manual": "node test/scripts/setup.js",
     "test:clean": "node test/scripts/clean.js",
     "prepublishOnly": "npm run test",
     "cover": "nyc ava test/unit/*.test.js",
+    "pretest": "npm run build",
     "test": "ava test/unit/*.test.js",
     "posttest": "npm run lint",
     "lint": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",
-    "prepush": "npm run lint"
+    "prepush": "npm run lint",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -39,8 +43,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.0",
-    "find-root": "^1.1.0",
-    "intercept-stdout": "^0.1.2"
+    "find-root": "^1.1.0"
   },
   "ava": {
     "timeout": "15s"
@@ -53,7 +56,13 @@
     "eslint-config-videojs": "^2.1.0",
     "husky": "^0.14.3",
     "nyc": "^11.4.1",
+    "rollup": "^0.54.0",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-json": "^2.3.0",
+    "rollup-plugin-node-resolve": "^3.0.2",
+    "rollup-plugin-uglify": "^2.0.1",
     "shelljs": "^0.7.8",
+    "uglify-es": "^3.3.7",
     "uuid": "^3.1.0"
   }
 }

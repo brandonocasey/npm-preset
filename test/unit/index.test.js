@@ -1081,3 +1081,119 @@ test('parallel: post failure', (t) => {
     });
   });
 });
+
+test('&& works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello && echo world'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello', 'world'], 'sub args worked');
+  });
+});
+
+test('|| works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'false || echo world'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['world'], 'sub args worked');
+  });
+});
+
+test('; works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello; echo world'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello', 'world'], 'sub args worked');
+  });
+});
+
+test('| works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo \'console.log("hello world");\' | node'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello world'], 'sub args worked');
+  });
+});
+
+test('$() works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo $(echo hello)'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello'], 'sub args worked');
+  });
+});
+
+test('> works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello world > test.txt'}}}).then(() => {
+    return promiseSpawn('npmp', ['echo'], {cwd: t.context.dir});
+  }).then((result) => {
+    const data = fs.readFileSync(path.join(t.context.dir, 'test.txt'), 'utf8');
+
+    t.deepEqual(data, 'hello world\n', 'sub args worked');
+  });
+});
+
+test('>> works', (t) => {
+  t.plan(1);
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello > test.txt', echo2: 'echo world >> test.txt'}}}).then(() => {
+    return promiseSpawn('npmp', ['echo', 'echo2'], {cwd: t.context.dir});
+  }).then((result) => {
+    const data = fs.readFileSync(path.join(t.context.dir, 'test.txt'), 'utf8');
+
+    t.deepEqual(data, 'hello\nworld\n', 'sub args worked');
+  });
+});
+
+test('bin in node_modules works', (t) => {
+  t.plan(1);
+
+  fs.writeFileSync(
+    path.join(t.context.dir, 'node_modules', '.bin', 'test-me'),
+    '#!/usr/bin/env node\nconsole.log("hello world");',
+    {mode: '0777'}
+  );
+
+  return t.context.modifyPkg({'npm-preset': {scripts: {test: 'test-me'}}}).then(() => {
+    return promiseSpawn('npmp', ['-co', 'test'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello world'], 'sub args worked');
+  });
+});
+
+test('bin in preset node_modules works', (t) => {
+  t.plan(1);
+
+  return t.context.addPreset('npm-preset-test', {test: 'test-me'}).then(() => {
+    const dir = path.join(t.context.dir, 'node_modules', 'npm-preset-test', 'node_modules', '.bin');
+
+    shelljs.mkdir('-p', dir);
+    fs.writeFileSync(
+      path.join(dir, 'test-me'),
+      '#!/usr/bin/env node\nconsole.log("hello world");',
+      {mode: '0777'}
+    );
+    return promiseSpawn('npmp', ['-co', 'test'], {cwd: t.context.dir});
+  }).then((result) => {
+    const stdouts = result.stdout.trim().split('\n');
+
+    t.deepEqual(stdouts, ['hello world'], 'sub args worked');
+  });
+});
+

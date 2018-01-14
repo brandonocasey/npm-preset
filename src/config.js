@@ -1,13 +1,14 @@
+import findRoot from 'find-root';
+import path from 'path';
+import pathExists from './path-exists';
+import fs from 'fs';
+
 let config;
 
 if (process.env.NPM_PRESET_CONFIG) {
   config = JSON.parse(process.env.NPM_PRESET_CONFIG);
 } else {
   /* eslint-disable no-console */
-  const findRoot = require('find-root');
-  const path = require('path');
-  const fs = require('fs');
-  const pathExists = require('./path-exists');
   const PATH = process.env.PATH.split(':');
 
   PATH.unshift(path.join(__dirname, 'node_modules', '.bin'));
@@ -24,7 +25,7 @@ if (process.env.NPM_PRESET_CONFIG) {
   }
 
   const appRoot = findRoot(dir);
-  const appPkg = require(path.join(dir, 'package.json'));
+  const appPkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json')));
   const name = appPkg.name.replace(/^@.+\//, '');
   const scope = appPkg.name.replace(name, '').replace(/\/$/, '');
   let author = appPkg.author || '';
@@ -97,7 +98,6 @@ if (process.env.NPM_PRESET_CONFIG) {
         console.error('ERROR: Could not find ' + preset.name + ', is it installed?');
         process.exit(1);
       }
-
     }
 
     let scripts = require(preset.path);
@@ -131,7 +131,7 @@ if (process.env.NPM_PRESET_CONFIG) {
   process.env.PATH = PATH.join(':');
   process.env.NPM_PRESET_CONFIG = JSON.stringify(config);
   process.env.FORCE_COLOR = 1;
-  process.setMaxListeners(1000);
+  process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 }
 
-module.exports = config;
+export default config;

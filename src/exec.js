@@ -1,6 +1,8 @@
-const config = require('./config');
-const Promise = require('bluebird');
-const childProcess = require('child_process');
+import config from './config';
+import Promise from 'bluebird';
+import {exec as cpExec} from 'child_process';
+// 10 megabytes
+const TEN_MB = 10485760;
 
 /**
  * Run a command on the terminal and attatch that command
@@ -15,7 +17,8 @@ const childProcess = require('child_process');
  */
 const exec = function(command) {
   return new Promise((resolve, reject) => {
-    const child = childProcess.exec(command, {
+    const child = cpExec(command, {
+      maxBuffer: TEN_MB,
       cwd: config.root,
       env: process.env,
       shell: true
@@ -41,4 +44,4 @@ const exec = function(command) {
   });
 };
 
-module.exports = exec;
+export default exec;

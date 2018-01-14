@@ -1,12 +1,11 @@
-#!/usr/bin/env node
 /* eslint-disable no-console */
 /* eslint-disable max-len */
-const runScript = require('./run-script');
-const filter = require('./filter');
-const pkg = require('../package.json');
-const config = require('./config');
-const Promise = require('bluebird');
-const scriptMatches = require('./script-matches');
+import runScript from './run-script';
+import filter from './filter';
+import pkg from '../package.json';
+import config from './config';
+import Promise from 'bluebird';
+import scriptMatches from './script-matches';
 const options = {
   version: false,
   help: false,

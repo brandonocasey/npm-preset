@@ -1,5 +1,6 @@
 ## MUST DO
-* verify the PATH changes
+* detect npmp usage, export npmp as a module and re-use it
+  * how can we still have shell ops work
 
 ## Stretch Goals
 * error colors (emulate npm?)

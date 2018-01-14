@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 
 const pathExists = function(p) {
   try {
@@ -9,4 +9,4 @@ const pathExists = function(p) {
   }
 };
 
-module.exports = pathExists;
+export default pathExists;

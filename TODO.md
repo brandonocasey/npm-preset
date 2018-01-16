@@ -1,6 +1,5 @@
 ## MUST DO
-* detect npmp usage, export npmp as a module and re-use it
-  * how can we still have shell ops work
+* Check benchmarks after: https://github.com/nodejs/node/issues/17058
 
 ## Stretch Goals
 * error colors (emulate npm?)

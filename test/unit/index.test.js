@@ -8,7 +8,7 @@ const Promise = require('bluebird');
 
 process.setMaxListeners(1000);
 
-const fixtureDir = path.join(__dirname, '..', 'fixtures', 'test-pkg-main');
+const fixtureDir = path.join(__dirname, '..', 'fixtures', 'unit-tests');
 const baseDir = path.join(__dirname, '..', '..');
 
 const promiseSpawn = function(bin, args, options = {}) {
@@ -57,13 +57,7 @@ const exists = function(filepath) {
 };
 
 test.before((t) => {
-  return promiseSpawn('node', [path.join(baseDir, 'test', 'scripts', 'clean.js')]).then(() => {
-    return promiseSpawn('node', [path.join(baseDir, 'test', 'scripts', 'setup.js')]);
-  });
-});
-
-test.after.always((t) => {
-  return promiseSpawn('node', [path.join(baseDir, 'test', 'scripts', 'clean.js')]);
+  return promiseSpawn('node', [path.join(baseDir, 'test', 'scripts', 'setup.js')]);
 });
 
 test.beforeEach((t) => {

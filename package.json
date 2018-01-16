@@ -9,17 +9,17 @@
   "scripts": {
     "watch": "rollup -c rollup.config.js -w",
     "build": "rollup -c rollup.config.js && chmod +x dist/*",
-    "pretest:manual": "npm run test:clean && npm run build",
+    "prebench": "npm run test:manual",
+    "bench": "node test/scripts/bench.js",
+    "pretest:manual": "npm run build",
     "test:manual": "node test/scripts/setup.js",
-    "test:clean": "node test/scripts/clean.js",
     "prepublishOnly": "npm run test",
     "cover": "nyc ava test/unit/*.test.js",
     "pretest": "npm run build",
     "test": "ava test/unit/*.test.js",
     "posttest": "npm run lint",
     "lint": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",
-    "prepush": "npm run lint",
-    "prepublish": "npm run build"
+    "prepush": "npm run lint"
   },
   "repository": {
     "type": "git",
@@ -54,6 +54,7 @@
     "coveralls": "^3.0.0",
     "eslint": "^4.15.0",
     "eslint-config-videojs": "^2.1.0",
+    "glob": "^7.1.2",
     "husky": "^0.14.3",
     "nyc": "^11.4.1",
     "rollup": "^0.54.0",

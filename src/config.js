@@ -4,10 +4,9 @@ if (process.env.NPM_PRESET_CONFIG) {
   config = JSON.parse(process.env.NPM_PRESET_CONFIG);
 } else {
   /* eslint-disable no-console */
-  const findRoot = require('find-root');
+  const pkgRoot = require('./pkg-root');
   const path = require('path');
   const fs = require('fs');
-  const pathExists = require('./path-exists');
   const PATH = process.env.PATH.split(':');
 
   PATH.unshift(path.join(__dirname, 'node_modules', '.bin'));
@@ -23,7 +22,7 @@ if (process.env.NPM_PRESET_CONFIG) {
     dir = path.join(process.cwd(), dir);
   }
 
-  const appRoot = findRoot(dir);
+  const appRoot = pkgRoot(dir);
   const appPkg = require(path.join(dir, 'package.json'));
   const name = appPkg.name.replace(/^@.+\//, '');
   const scope = appPkg.name.replace(name, '').replace(/\/$/, '');
@@ -88,10 +87,10 @@ if (process.env.NPM_PRESET_CONFIG) {
     if (!preset.path) {
       const nodeModules = path.join(config.root, 'node_modules');
 
-      if (!preset.path && pathExists(path.join(nodeModules, 'npm-preset-' + preset.name))) {
+      if (!preset.path && fs.existsSync(path.join(nodeModules, 'npm-preset-' + preset.name))) {
         preset.name = 'npm-preset-' + preset.name;
         preset.path = path.join(nodeModules, preset.name);
-      } else if (!preset.path && pathExists(path.join(nodeModules, preset.name))) {
+      } else if (!preset.path && fs.existsSync(path.join(nodeModules, preset.name))) {
         preset.path = path.join(nodeModules, preset.name);
       } else {
         console.error('ERROR: Could not find ' + preset.name + ', is it installed?');

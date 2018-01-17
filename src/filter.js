@@ -27,14 +27,14 @@ const intercept = function(stdoutIntercept, stderrIntercept) {
 
 // prebuild shorten regexes
 const regexes = [
-  {find: RegExp(config.root + path.sep, 'g'), replace: ''},
-  {find: RegExp(config.root, 'g'), replace: ''}
+  {find: RegExp(`${config.root}${path.sep}?`, 'g'), replace: ''}
 ];
 
-config.npmPreset.presets.forEach(function(preset) {
-  regexes.push({find: RegExp(preset.path, 'g'), replace: '<npmp-' + preset._shortname + '>'});
-  regexes.push({find: RegExp(preset._realpath, 'g'), replace: '<npmp-' + preset._shortname + '>'});
-  regexes.push({find: RegExp(preset._localpath, 'g'), replace: '<npmp-' + preset._shortname + '>'});
+config.npmPreset.presets.forEach(function(p) {
+  regexes.push({
+    find: RegExp(`${p.path}|${p._realpath}|${p._localpath}`, 'g'),
+    replace: `<npmp-${p._shortname}>`
+  });
 });
 
 regexes.push({find: RegExp(path.join(__dirname, '..'), 'g'), replace: '<npmp>'});

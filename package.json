@@ -7,9 +7,9 @@
     "npm-preset": "./src/npmp.js"
   },
   "scripts": {
-    "pretest:manual": "npm run test:clean",
-    "test:manual": "node test/scripts/setup.js",
-    "test:clean": "node test/scripts/clean.js",
+    "prebench": "npm run test-setup",
+    "bench": "node test/scripts/bench.js",
+    "test-setup": "node test/scripts/setup.js",
     "prepublishOnly": "npm run test",
     "cover": "nyc ava test/unit/*.test.js",
     "test": "ava test/unit/*.test.js",

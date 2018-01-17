@@ -1,0 +1,33 @@
+  {
+  "name": "bench",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "npm-preset": {
+    "scripts": {
+      "baseline": "echo hello world",
+      "serial:single": "npmp baseline",
+      "serial:double": "npmp baseline baseline",
+      "serial:triple": "npmp baseline baseline baseline",
+      "serial:nested": "npmp serial:nested1",
+      "serial:nested1": "npmp serial:nested2",
+      "serial:nested2": "npmp serial:nested3",
+      "serial:nested3": "npmp serial:nested4",
+      "serial:nested4": "npmp baseline",
+
+      "parallel:single": "npmp -p baseline",
+      "parallel:double": "npmp -p baseline baseline",
+      "parallel:triple": "npmp -p baseline baseline baseline",
+      "parallel:nested": "npmp -p parallel:nested1",
+      "parallel:nested1": "npmp -p parallel:nested2",
+      "parallel:nested2": "npmp -p parallel:nested3",
+      "parallel:nested3": "npmp -p parallel:nested4",
+      "parallel:nested4": "npmp -p baseline"
+
+    }
+  },
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

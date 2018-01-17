@@ -37,6 +37,9 @@
       "test"
     ]
   },
+  "engines": {
+    "node": ">=4.8.0"
+  },
   "dependencies": {},
   "ava": {
     "timeout": "15s"

@@ -1,6 +1,29 @@
 const config = require('./config');
 const path = require('path');
-const intercept = require('intercept-stdout');
+
+const intercept = function(stdoutIntercept, stderrIntercept) {
+  const interceptors = {
+    stderr: stderrIntercept || stdoutIntercept,
+    stdout: stdoutIntercept
+  };
+  const oldWrite = {
+    stdout: process.stdout.write,
+    stderr: process.stderr.write
+  };
+
+  Object.keys(interceptors).forEach((fd) => {
+    process[fd].write = function(...args) {
+      args[0] = interceptors[fd](args[0], stdoutIntercept);
+
+      oldWrite[fd].apply(process[fd], args);
+    };
+  });
+
+  // restore
+  return () => Object.keys(oldWrite).forEach((fd) => {
+    process[fd].write = oldWrite[fd];
+  });
+};
 
 // prebuild shorten regexes
 const regexes = [

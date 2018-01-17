@@ -5,8 +5,9 @@ const runScript = require('./run-script');
 const filter = require('./filter');
 const pkg = require('../package.json');
 const config = require('./config');
-const Promise = require('bluebird');
 const scriptMatches = require('./script-matches');
+const mapPromise = require('./map-promise');
+const mapSeriesPromise = require('./map-series-promise');
 
 const npmp = function(args) {
   const options = {
@@ -134,12 +135,12 @@ const npmp = function(args) {
   }
 
   // run through each task, before going to the next one
-  return Promise.mapSeries(options.tasks, function(task) {
+  return mapSeriesPromise(options.tasks, function(task) {
     if (task.type === 'series') {
-      return Promise.mapSeries(task.scripts, (s) => runScript(s, options.subArgs));
+      return mapSeriesPromise(task.scripts, (s) => runScript(s, options.subArgs));
     }
 
-    return Promise.map(task.scripts, (s) => runScript(s, options.subArgs));
+    return mapPromise(task.scripts, (s) => runScript(s, options.subArgs));
   });
 };
 

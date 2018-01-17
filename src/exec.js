@@ -1,5 +1,4 @@
 const config = require('./config');
-const Promise = require('bluebird');
 const cpExec = require('child_process').exec;
 // 10 megabytes
 const TEN_MB = 10485760;

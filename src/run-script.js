@@ -2,9 +2,9 @@
 /* eslint-disable max-len */
 
 const exec = require('./exec');
-const Promise = require('bluebird');
 const config = require('./config');
 const scripts = config.scripts;
+const mapPromise = require('./map-promise');
 
 /**
  * Run a command on the terminal
@@ -66,8 +66,9 @@ const runScript = function(scriptName, args = []) {
   }
 
   return p.then(function(result) {
+
     // run any scripts with the same name in parallel
-    return Promise.map(scripts[scriptName], (scriptObject) => {
+    return mapPromise(scripts[scriptName], (scriptObject) => {
       return runCommand(scriptName, scriptObject.source, scriptObject.command, args);
     });
   }).then(function(result) {

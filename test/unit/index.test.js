@@ -4,7 +4,6 @@ const uuid = require('uuid');
 const fs = require('fs');
 const shelljs = require('shelljs');
 const childProcess = require('child_process');
-const Promise = require('bluebird');
 
 process.setMaxListeners(1000);
 

@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-disable no-console */
 /* eslint-disable max-len */
 
@@ -53,7 +54,9 @@ const runCommand = function(scriptName, source, command, args) {
  *         A promise that is resolved/rejected when the script pre-scripts, and
  *         post scripts have been run or errored.
  */
-const runScript = function(scriptName, args = []) {
+const runScript = function(scriptName, args) {
+  args = args || [];
+
   if (Object.keys(scripts).indexOf(scriptName) === -1) {
     console.error('missing script: ' + scriptName);
     process.exit(1);

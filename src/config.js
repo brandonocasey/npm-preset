@@ -1,3 +1,5 @@
+'use strict';
+
 let config;
 
 if (process.env.NPM_PRESET_CONFIG) {

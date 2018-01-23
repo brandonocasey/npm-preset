@@ -1,3 +1,5 @@
+'use strict';
+
 const mapSeriesPromise = (array, fn) => {
   const nextValue = array.shift();
   const promise = fn(nextValue);

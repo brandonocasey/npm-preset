@@ -1,3 +1,4 @@
+'use strict';
 const config = require('./config');
 const path = require('path');
 
@@ -12,7 +13,9 @@ const intercept = function(stdoutIntercept, stderrIntercept) {
   };
 
   Object.keys(interceptors).forEach((fd) => {
-    process[fd].write = function(...args) {
+    process[fd].write = function() {
+      const args = Array.prototype.slice.call(arguments);
+
       args[0] = interceptors[fd](args[0], stdoutIntercept);
 
       oldWrite[fd].apply(process[fd], args);

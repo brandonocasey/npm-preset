@@ -1,3 +1,5 @@
+'use strict';
+
 const config = require('./config');
 const cpExec = require('child_process').exec;
 // 10 megabytes

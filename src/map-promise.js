@@ -1,3 +1,5 @@
+'use strict';
+
 const mapPromise = (array, fn) => {
   const promises = [];
 

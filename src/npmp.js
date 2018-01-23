@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+'use strict';
+
 /* eslint-disable no-console */
 /* eslint-disable max-len */
 const runScript = require('./run-script');

@@ -1,7 +1,10 @@
 sudo: false
 dist: trusty
 language: node_js
-node_js: 'lts/*'
+node_js:
+- 'lts/*'
+- 4
+- 6
 
 # greenkeeper support
 before_install:

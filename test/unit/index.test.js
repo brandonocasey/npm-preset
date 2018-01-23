@@ -1,7 +1,8 @@
 const test = require('ava');
 const path = require('path');
 const uuid = require('uuid');
-const fs = require('fs');
+const Promise = require('bluebird');
+const fs = Promise.promisifyAll(require('fs'));
 const shelljs = require('shelljs');
 const childProcess = require('child_process');
 
@@ -46,13 +47,16 @@ const promiseSpawn = function(bin, args, options = {}) {
   });
 };
 
-const exists = function(filepath) {
-  try {
-    fs.accessSync(filepath);
-  } catch (e) {
-    return false;
+const exists = function(files) {
+  if (typeof files === 'string') {
+    files = [files];
   }
-  return true;
+  return Promise.all(Promise.map(files, function(file) {
+
+    return fs.accessAsync(file)
+      .then(() => Promise.resolve({file, exists: true}))
+      .catch(() => Promise.resolve({file, exists: false}));
+  }));
 };
 
 test.before((t) => {
@@ -64,45 +68,43 @@ test.beforeEach((t) => {
 
   t.context.dir = tempdir;
   t.context.modifyPkg = (newPkg) => {
-    return new Promise((resolve, reject) => {
-      const pkgPath = path.join(tempdir, 'package.json');
-      const oldPkg = require(pkgPath);
+    const pkgPath = path.join(tempdir, 'package.json');
+    const oldPkg = require(pkgPath);
 
-      resolve(fs.writeFileSync(pkgPath, JSON.stringify(Object.assign(oldPkg, newPkg))));
-    });
+    return fs.writeFileAsync(pkgPath, JSON.stringify(Object.assign(oldPkg, newPkg)));
   };
 
   t.context.addPreset = (name, scripts, modifyPkg) => {
-    return new Promise((resolve, reject) => {
-      if (typeof modifyPkg === 'undefined') {
-        modifyPkg = true;
-      }
+    if (typeof modifyPkg === 'undefined') {
+      modifyPkg = true;
+    }
 
-      const dir = path.join(tempdir, 'node_modules', name);
+    const dir = path.join(tempdir, 'node_modules', name);
 
-      shelljs.mkdir('-p', dir);
-      const pkg = {
-        name,
-        version: '1.0.0',
-        description: '',
-        main: 'index.js',
-        scripts: {},
-        keywords: [],
-        author: '',
-        license: 'ISC'
-      };
+    shelljs.mkdir('-p', dir);
+    const pkg = {
+      name,
+      version: '1.0.0',
+      description: '',
+      main: 'index.js',
+      scripts: {},
+      keywords: [],
+      author: '',
+      license: 'ISC'
+    };
 
-      fs.writeFileSync(path.join(dir, 'index.js'), 'module.exports = ' + JSON.stringify(scripts) + ';');
-      fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(pkg));
-
+    return Promise.all([
+      fs.writeFileAsync(path.join(dir, 'index.js'), 'module.exports = ' + JSON.stringify(scripts) + ';'),
+      fs.writeFileAsync(path.join(dir, 'package.json'), JSON.stringify(pkg))
+    ]).then(() => {
       if (modifyPkg) {
         const updatePkg = {dependencies: {}};
 
         updatePkg.dependencies[name] = '1.0.0';
-        t.context.modifyPkg(updatePkg);
+        return t.context.modifyPkg(updatePkg);
       }
 
-      resolve();
+      return Promise.resolve();
     });
   };
 
@@ -121,9 +123,12 @@ test.afterEach.always((t) => {
     return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
       return promiseSpawn('npmp', [o, 'touch'], {cwd: t.context.dir});
     }).then((result) => {
-      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.not(result.stdout.trim(), 0, 'stdout');
       t.is(result.stderr.trim().length, 0, 'no stderr');
+
+      return exists(path.join(t.context.dir, 'file.test'));
+    }).then((results) => {
+      t.is(results[0].exists, false, 'file.test not created');
     });
   });
 });
@@ -145,9 +150,12 @@ test('object author is stringified', (t) => {
     return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
       return promiseSpawn('npmp', [o, 'touch'], {cwd: t.context.dir});
     }).then((result) => {
-      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was created');
       t.not(result.stdout.trim(), 0, 'stdout');
       t.is(result.stderr.trim().length, 0, 'no stderr');
+
+      return exists(path.join(t.context.dir, 'file.test'));
+    }).then((results) => {
+      t.is(results[0].exists, false, 'file.test not created');
     });
   });
 });
@@ -158,9 +166,12 @@ test('object author is stringified', (t) => {
     return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
       return promiseSpawn('npmp', [o, 'touch'], {cwd: t.context.dir});
     }).then((result) => {
-      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
       t.not(result.stdout.trim(), 0, 'stdout');
       t.is(result.stderr.trim().length, 0, 'no stderr');
+
+      return exists(path.join(t.context.dir, 'file.test'));
+    }).then((results) => {
+      t.is(results[0].exists, false, 'file.test not created');
     });
   });
 });
@@ -184,9 +195,12 @@ test('object author is stringified', (t) => {
       stdout += '  "touch": "touch ./file.test"\n';
       stdout += '\n';
 
-      t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
       t.is(result.stdout, stdout, 'stdout');
       t.is(result.stderr.trim().length, 0, 'no stderr');
+
+      return exists(path.join(t.context.dir, 'file.test'));
+    }).then((results) => {
+      t.is(results[0].exists, false, 'file.test not created');
     });
   });
 });
@@ -220,9 +234,12 @@ test('presets can be found via deps', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -241,9 +258,12 @@ test('presets can be found via dev deps', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -262,9 +282,12 @@ test('presets can be found via npm-preset.preset long name', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -283,9 +306,12 @@ test('presets can be found via npm-preset.preset short name', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -297,10 +323,7 @@ test('presets can be an object in npm-preset.preset', (t) => {
     name: 'my-custom-preset'
   };
 
-  return new Promise((resolve, reject) => {
-    fs.writeFileSync(preset.path, 'module.exports = ' + JSON.stringify(scripts) + ';');
-    resolve();
-  }).then(() => {
+  return fs.writeFileAsync(preset.path, 'module.exports = ' + JSON.stringify(scripts) + ';').then(() => {
     return t.context.modifyPkg({'npm-preset': {presets: [preset]}});
   }).then(() => {
     return promiseSpawn('npmp', ['--list'], {cwd: t.context.dir});
@@ -311,9 +334,12 @@ test('presets can be an object in npm-preset.preset', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -325,11 +351,7 @@ test('presets can be a function', (t) => {
     name: 'my-custom-preset'
   };
 
-  return new Promise((resolve, reject) => {
-    t.log(JSON.stringify(scripts));
-    fs.writeFileSync(preset.path, 'module.exports = function() { return ' + JSON.stringify(scripts) + '; };');
-    resolve();
-  }).then(() => {
+  return fs.writeFileAsync(preset.path, 'module.exports = function() { return ' + JSON.stringify(scripts) + '; };').then(() => {
     return t.context.modifyPkg({'npm-preset': {presets: [preset]}});
   }).then(() => {
     return promiseSpawn('npmp', ['--list'], {cwd: t.context.dir});
@@ -340,9 +362,12 @@ test('presets can be a function', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -363,9 +388,12 @@ test('presets are skipped when not in npm-preset.preset', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -396,8 +424,9 @@ test('invalid scripts export error', (t) => {
 test('invalid dir', (t) => {
   t.plan(3);
 
-  fs.unlinkSync(path.join(t.context.dir, 'package.json'));
-  return promiseSpawn('npmp', ['--list'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+  return fs.unlinkAsync(path.join(t.context.dir, 'package.json')).then(() => {
+    return promiseSpawn('npmp', ['--list'], {cwd: t.context.dir, ignoreExitCode: true});
+  }).then((result) => {
     t.is(result.stdout.trim(), '', 'stdout');
     t.not(result.stderr.trim().length, 0, 'stderr');
     t.not(result.exitCode, 0, 'failure');
@@ -419,9 +448,12 @@ test('presets can be found with scopes', (t) => {
     stdout += '  "touch": "touch ./file.test"\n';
     stdout += '\n';
 
-    t.false(exists(path.join(t.context.dir, 'file.test')), 'file was not created');
     t.is(result.stdout, stdout, 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
+
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, false, 'file.test not created');
   });
 });
 
@@ -580,7 +612,9 @@ test('serial: single', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npmp', ['touch'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
   });
 });
 
@@ -592,7 +626,9 @@ test('can run in subdir', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npmp', ['touch'], {cwd: testDir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
   });
 });
 
@@ -601,8 +637,13 @@ test('serial: double', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}}).then(() => {
     return promiseSpawn('npmp', ['touch', 'touch2'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test')
+    ]);
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
+    t.is(results[1].exists, true, 'file2.test created');
   });
 });
 
@@ -616,10 +657,21 @@ test('serial: *', (t) => {
   }}}).then(() => {
     return promiseSpawn('npmp', ['touch:*'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
-    t.false(exists(path.join(t.context.dir, 'file3.test')), 'file was not created');
-    t.false(exists(path.join(t.context.dir, 'file4.test')), 'file was not created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test'),
+      path.join(t.context.dir, 'file3.test'),
+      path.join(t.context.dir, 'file4.test')
+    ]);
+  }).then((results) => {
+    results.forEach(function(r) {
+      let shouldExist = true;
+
+      if ((/file(3|4).test/).test(path.basename(r.file))) {
+        shouldExist = false;
+      }
+      t.is(r.exists, shouldExist);
+    });
   });
 });
 
@@ -628,7 +680,9 @@ test('parallel: single', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npmp', ['-p', 'touch'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+    return exists(path.join(t.context.dir, 'file.test'));
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
   });
 });
 
@@ -637,8 +691,13 @@ test('parallel: double', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch file.test', touch2: 'touch file2.test'}}}).then(() => {
     return promiseSpawn('npmp', ['-p', 'touch', 'touch2'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test')
+    ]);
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
+    t.is(results[1].exists, true, 'file2.test created');
   });
 });
 
@@ -652,10 +711,21 @@ test('parallel: *', (t) => {
   }}}).then(() => {
     return promiseSpawn('npmp', ['-p', 'touch:*'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
-    t.false(exists(path.join(t.context.dir, 'file3.test')), 'file was not created');
-    t.false(exists(path.join(t.context.dir, 'file4.test')), 'file was not created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test'),
+      path.join(t.context.dir, 'file3.test'),
+      path.join(t.context.dir, 'file4.test')
+    ]);
+  }).then((results) => {
+    results.forEach(function(r) {
+      let shouldExist = true;
+
+      if ((/file(3|4).test/).test(path.basename(r.file))) {
+        shouldExist = false;
+      }
+      t.is(r.exists, shouldExist);
+    });
   });
 });
 
@@ -667,8 +737,13 @@ test('serial and parallel: single', (t) => {
   }}}).then(() => {
     return promiseSpawn('npmp', ['touch', '-p', 'touch2'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test')
+    ]);
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
+    t.is(results[1].exists, true, 'file2.test created');
   });
 });
 
@@ -682,10 +757,14 @@ test('serial and parallel: double', (t) => {
   }}}).then(() => {
     return promiseSpawn('npmp', ['touch', 'touch2', '-p', 'touch3', 'touch4'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file3.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file4.test')), 'file was created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test'),
+      path.join(t.context.dir, 'file3.test'),
+      path.join(t.context.dir, 'file4.test')
+    ]);
+  }).then((results) => {
+    results.forEach((r) => t.is(r.exists, true, 'file was created'));
   });
 });
 
@@ -704,15 +783,25 @@ test('serial and parallel: *', (t) => {
   }}}).then(() => {
     return promiseSpawn('npmp', ['-s', 'serial:*', '-p', 'parallel:*'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file3.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file4.test')), 'file was created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test'),
+      path.join(t.context.dir, 'file3.test'),
+      path.join(t.context.dir, 'file4.test'),
+      path.join(t.context.dir, 'file5.test'),
+      path.join(t.context.dir, 'file6.test'),
+      path.join(t.context.dir, 'file7.test'),
+      path.join(t.context.dir, 'file8.test')
+    ]);
+  }).then((results) => {
+    results.forEach(function(r) {
+      let shouldExist = true;
 
-    t.false(exists(path.join(t.context.dir, 'file5.test')), 'file was created');
-    t.false(exists(path.join(t.context.dir, 'file6.test')), 'file was created');
-    t.false(exists(path.join(t.context.dir, 'file7.test')), 'file was created');
-    t.false(exists(path.join(t.context.dir, 'file8.test')), 'file was created');
+      if ((/file(5|6|7|8).test/).test(path.basename(r.file))) {
+        shouldExist = false;
+      }
+      t.is(r.exists, shouldExist);
+    });
   });
 });
 
@@ -725,8 +814,13 @@ test('serial: nested', (t) => {
   }}}).then(() => {
     return promiseSpawn('npmp', ['serial'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test')
+    ]);
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
+    t.is(results[1].exists, true, 'file2.test created');
   });
 });
 
@@ -739,8 +833,13 @@ test('parallel: nested', (t) => {
   }}}).then(() => {
     return promiseSpawn('npmp', ['parallel'], {cwd: t.context.dir});
   }).then(() => {
-    t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
-    t.true(exists(path.join(t.context.dir, 'file2.test')), 'file was created');
+    return exists([
+      path.join(t.context.dir, 'file.test'),
+      path.join(t.context.dir, 'file2.test')
+    ]);
+  }).then((results) => {
+    t.is(results[0].exists, true, 'file.test created');
+    t.is(results[1].exists, true, 'file2.test created');
   });
 });
 
@@ -1169,8 +1268,8 @@ test('> works', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello world > test.txt'}}}).then(() => {
     return promiseSpawn('npmp', ['echo'], {cwd: t.context.dir});
   }).then((result) => {
-    const data = fs.readFileSync(path.join(t.context.dir, 'test.txt'), 'utf8');
-
+    return fs.readFileAsync(path.join(t.context.dir, 'test.txt'), 'utf8');
+  }).then((data) => {
     t.deepEqual(data, 'hello world\n', 'sub args worked');
   });
 });
@@ -1180,8 +1279,8 @@ test('>> works', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello > test.txt', echo2: 'echo world >> test.txt'}}}).then(() => {
     return promiseSpawn('npmp', ['echo', 'echo2'], {cwd: t.context.dir});
   }).then((result) => {
-    const data = fs.readFileSync(path.join(t.context.dir, 'test.txt'), 'utf8');
-
+    return fs.readFileAsync(path.join(t.context.dir, 'test.txt'), 'utf8');
+  }).then((data) => {
     t.deepEqual(data, 'hello\nworld\n', 'sub args worked');
   });
 });
@@ -1189,13 +1288,13 @@ test('>> works', (t) => {
 test('bin in node_modules works', (t) => {
   t.plan(1);
 
-  fs.writeFileSync(
+  return fs.writeFileAsync(
     path.join(t.context.dir, 'node_modules', '.bin', 'test-me'),
     '#!/usr/bin/env node\nconsole.log("hello world");',
     {mode: '0777'}
-  );
-
-  return t.context.modifyPkg({'npm-preset': {scripts: {test: 'test-me'}}}).then(() => {
+  ).then(() => {
+    return t.context.modifyPkg({'npm-preset': {scripts: {test: 'test-me'}}});
+  }).then(() => {
     return promiseSpawn('npmp', ['-co', 'test'], {cwd: t.context.dir});
   }).then((result) => {
     const stdouts = result.stdout.trim().split('\n');
@@ -1211,11 +1310,12 @@ test('bin in preset node_modules works', (t) => {
     const dir = path.join(t.context.dir, 'node_modules', 'npm-preset-test', 'node_modules', '.bin');
 
     shelljs.mkdir('-p', dir);
-    fs.writeFileSync(
+    return fs.writeFileAsync(
       path.join(dir, 'test-me'),
       '#!/usr/bin/env node\nconsole.log("hello world");',
       {mode: '0777'}
     );
+  }).then(() => {
     return promiseSpawn('npmp', ['-co', 'test'], {cwd: t.context.dir});
   }).then((result) => {
     const stdouts = result.stdout.trim().split('\n');

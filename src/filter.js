@@ -19,10 +19,11 @@ const intercept = function(stdoutIntercept, stderrIntercept) {
     };
   });
 
+  /*
   // restore
   return () => Object.keys(oldWrite).forEach((fd) => {
     process[fd].write = oldWrite[fd];
-  });
+  });*/
 };
 
 // prebuild shorten regexes

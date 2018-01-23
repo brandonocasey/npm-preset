@@ -326,6 +326,7 @@ test('presets can be a function', (t) => {
   };
 
   return new Promise((resolve, reject) => {
+    t.log(JSON.stringify(scripts));
     fs.writeFileSync(preset.path, 'module.exports = function() { return ' + JSON.stringify(scripts) + '; };');
     resolve();
   }).then(() => {
@@ -377,6 +378,29 @@ test('invalid presets error', (t) => {
       t.not(result.stderr.trim().length, 0, 'stderr');
       t.not(result.exitCode, 0, 'failure');
     });
+  });
+});
+
+test('invalid scripts export error', (t) => {
+  t.plan(3);
+
+  return t.context.addPreset('npm-preset-test', 'cow').then(() => {
+    return promiseSpawn('npmp', ['--list'], {cwd: t.context.dir, ignoreExitCode: true});
+  }).then((result) => {
+    t.is(result.stdout.trim(), '', 'stdout');
+    t.not(result.stderr.trim().length, 0, 'stderr');
+    t.not(result.exitCode, 0, 'failure');
+  });
+});
+
+test('invalid dir', (t) => {
+  t.plan(3);
+
+  fs.unlinkSync(path.join(t.context.dir, 'package.json'));
+  return promiseSpawn('npmp', ['--list'], {cwd: t.context.dir, ignoreExitCode: true}).then((result) => {
+    t.is(result.stdout.trim(), '', 'stdout');
+    t.not(result.stderr.trim().length, 0, 'stderr');
+    t.not(result.exitCode, 0, 'failure');
   });
 });
 
@@ -555,6 +579,18 @@ test('serial: single', (t) => {
   t.plan(1);
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
     return promiseSpawn('npmp', ['touch'], {cwd: t.context.dir}).then(() => {
+      t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
+    });
+  });
+});
+
+test('can run in subdir', (t) => {
+  t.plan(1);
+  const testDir = path.join(t.context.dir, 'test');
+
+  shelljs.mkdir('-p', testDir);
+  return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
+    return promiseSpawn('npmp', ['touch'], {cwd: testDir}).then(() => {
       t.true(exists(path.join(t.context.dir, 'file.test')), 'file was created');
     });
   });

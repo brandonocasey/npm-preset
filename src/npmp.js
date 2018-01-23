@@ -147,6 +147,8 @@ const npmp = function(args) {
 // if we are run as a binary:
 // * node npmp
 // * ./npmp
+
+/* istanbul ignore if */
 if (require.main === module) {
   const final = (result) => process.exit(result.code);
 

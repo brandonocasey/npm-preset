@@ -23,7 +23,13 @@ if (process.env.NPM_PRESET_CONFIG) {
   }
 
   const appRoot = pkgRoot(dir);
-  const appPkg = require(path.join(dir, 'package.json'));
+
+  if (!appRoot) {
+    console.error('No package.json in current directory tree');
+    process.exit(1);
+  }
+
+  const appPkg = require(path.join(appRoot, 'package.json'));
   const name = appPkg.name.replace(/^@.+\//, '');
   const scope = appPkg.name.replace(name, '').replace(/\/$/, '');
   let author = appPkg.author || '';

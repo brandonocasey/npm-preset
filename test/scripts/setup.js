@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
-const shelljs = require('shelljs');
+const Promise = require('bluebird');
 const path = require('path');
-const fs = require('fs');
+const fs = Promise.promisifyAll(require('fs'));
+const mkdirp = Promise.promisify(require('mkdirp'));
+const rimraf = Promise.promisify(require('rimraf'));
 const baseDir = path.join(__dirname, '..', '..');
 const pkg = require(path.join(baseDir, 'package.json'));
 const dirs = [
@@ -9,27 +11,26 @@ const dirs = [
   path.join(baseDir, 'test', 'fixtures', 'bench')
 ];
 
-dirs.forEach(function(dir) {
-
+Promise.all(Promise.map(dirs, function(dir) {
   const modules = path.join(dir, 'node_modules');
   const name = path.basename(dir);
 
-  console.log(`Setting up ${path.relative(baseDir, dir)}`);
+  return rimraf(modules).then(() => {
+    return mkdirp(path.join(modules, '.bin'));
+  }).then(() => {
+    return fs.symlinkAsync(baseDir, path.join(modules, pkg.name), 'dir');
+  }).then(() => {
+    return Promise.all(Promise.map(Object.keys(pkg.bin), (binName) => {
+      const binPath = path.join(baseDir, pkg.bin[binName]);
 
-  if (shelljs.test('-d', modules)) {
-    shelljs.rm('-rf', modules);
-  }
-  shelljs.mkdir('-p', path.join(modules, '.bin'));
-  shelljs.ln('-sf', baseDir, path.join(modules, pkg.name));
+      fs.symlinkAsync(binPath, path.join(modules, '.bin', binName), 'file');
+    }));
+  }).then(() => {
+    if (name !== 'unit-tests') {
+      return Promise.resolve();
+    }
 
-  Object.keys(pkg.bin).forEach((binName) => {
-    const binPath = path.join(baseDir, pkg.bin[binName]);
-
-    shelljs.ln('-sf', binPath, path.join(modules, '.bin', binName));
-  });
-
-  if (name === 'unit-tests') {
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({
+    return fs.writeFileAsync(path.join(dir, 'package.json'), JSON.stringify({
       'name': 'unit-tests',
       'version': '1.0.0',
       'description': '',
@@ -40,6 +41,7 @@ dirs.forEach(function(dir) {
       'author': '',
       'license': 'ISC'
     }, null, 2));
-
-  }
-});
+  }).then(() => {
+    console.log(`Set up ${path.relative(baseDir, dir)}`);
+  });
+}));

@@ -38,7 +38,7 @@
     ]
   },
   "engines": {
-    "node": ">=4.8.0"
+    "node": ">=4"
   },
   "dependencies": {},
   "ava": {
@@ -52,8 +52,10 @@
     "eslint": "^4.15.0",
     "eslint-config-videojs": "^2.1.0",
     "husky": "^0.14.3",
+    "mkdirp": "^0.5.1",
+    "ncp": "^2.0.0",
     "nyc": "^11.4.1",
-    "shelljs": "^0.8.1",
+    "rimraf": "^2.6.2",
     "uuid": "^3.1.0"
   }
 }

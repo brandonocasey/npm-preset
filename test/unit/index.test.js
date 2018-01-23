@@ -5,9 +5,11 @@ const path = require('path');
 const uuid = require('uuid');
 const Promise = require('bluebird');
 const fs = Promise.promisifyAll(require('fs'));
-const shelljs = require('shelljs');
 const childProcess = require('child_process');
 const tmpdir = require('os').tmpdir();
+const mkdirp = Promise.promisify(require('mkdirp'));
+const rimraf = Promise.promisify(require('rimraf'));
+const ncp = Promise.promisify(require('ncp'));
 
 process.setMaxListeners(1000);
 
@@ -84,7 +86,6 @@ test.beforeEach((t) => {
 
     const dir = path.join(tempdir, 'node_modules', name);
 
-    shelljs.mkdir('-p', dir);
     const pkg = {
       name,
       version: '1.0.0',
@@ -96,10 +97,12 @@ test.beforeEach((t) => {
       license: 'ISC'
     };
 
-    return Promise.all([
-      fs.writeFileAsync(path.join(dir, 'index.js'), 'module.exports = ' + JSON.stringify(scripts) + ';'),
-      fs.writeFileAsync(path.join(dir, 'package.json'), JSON.stringify(pkg))
-    ]).then(() => {
+    return mkdirp(dir).then(() => {
+      return Promise.all([
+        fs.writeFileAsync(path.join(dir, 'index.js'), 'module.exports = ' + JSON.stringify(scripts) + ';'),
+        fs.writeFileAsync(path.join(dir, 'package.json'), JSON.stringify(pkg))
+      ]);
+    }).then(() => {
       if (modifyPkg) {
         const updatePkg = {dependencies: {}};
 
@@ -111,12 +114,12 @@ test.beforeEach((t) => {
     });
   };
 
-  return promiseSpawn('cp', ['-R', fixtureDir + path.sep, tempdir], {});
+  return ncp(fixtureDir + path.sep, tempdir);
 });
 
 test.afterEach.always((t) => {
   if (t.context.dir) {
-    return promiseSpawn('rm', ['-rf', t.context.dir], {});
+    return rimraf(t.context.dir);
   }
 });
 
@@ -625,8 +628,9 @@ test('can run in subdir', (t) => {
   t.plan(1);
   const testDir = path.join(t.context.dir, 'test');
 
-  shelljs.mkdir('-p', testDir);
-  return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
+  return mkdirp(testDir).then(() => {
+    return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}});
+  }).then(() => {
     return promiseSpawn(path.join('..', 'node_modules', '.bin', 'npmp'), ['touch'], {cwd: testDir});
   }).then(() => {
     return exists(path.join(t.context.dir, 'file.test'));
@@ -1308,11 +1312,11 @@ test('bin in node_modules works', (t) => {
 
 test('bin in preset node_modules works', (t) => {
   t.plan(1);
+  const dir = path.join(t.context.dir, 'node_modules', 'npm-preset-test', 'node_modules', '.bin');
 
   return t.context.addPreset('npm-preset-test', {test: 'test-me'}).then(() => {
-    const dir = path.join(t.context.dir, 'node_modules', 'npm-preset-test', 'node_modules', '.bin');
-
-    shelljs.mkdir('-p', dir);
+    return mkdirp(dir);
+  }).then(() => {
     return fs.writeFileAsync(
       path.join(dir, 'test-me'),
       '#!/usr/bin/env node\nconsole.log("hello world");',

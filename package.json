@@ -11,7 +11,7 @@
     "bench": "node test/scripts/bench.js",
     "test-setup": "node test/scripts/setup.js",
     "prepublishOnly": "npm run test",
-    "cover": "nyc ava test/unit/*.test.js",
+    "cover": "nyc ava test/unit/*.test.js --timeout '120s'",
     "test": "ava test/unit/*.test.js",
     "posttest": "npm run lint",
     "lint": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",

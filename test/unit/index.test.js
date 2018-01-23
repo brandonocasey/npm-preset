@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const fs = Promise.promisifyAll(require('fs'));
 const shelljs = require('shelljs');
 const childProcess = require('child_process');
+const tmpdir = require('os').tmpdir();
 
 process.setMaxListeners(1000);
 
@@ -64,7 +65,7 @@ test.before((t) => {
 });
 
 test.beforeEach((t) => {
-  const tempdir = path.join(shelljs.tempdir(), uuid.v4());
+  const tempdir = path.join(tmpdir, uuid.v4());
 
   t.context.dir = tempdir;
   t.context.modifyPkg = (newPkg) => {
@@ -624,7 +625,7 @@ test('can run in subdir', (t) => {
 
   shelljs.mkdir('-p', testDir);
   return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
-    return promiseSpawn('npmp', ['touch'], {cwd: testDir});
+    return promiseSpawn(path.join('..', 'node_modules', '.bin', 'npmp'), ['touch'], {cwd: testDir});
   }).then(() => {
     return exists(path.join(t.context.dir, 'file.test'));
   }).then((results) => {

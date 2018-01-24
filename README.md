@@ -10,6 +10,7 @@
 
 * [Benefits over vanilla npm scripts](#benefits-over-vanilla-npm-scripts)
 * [Usage](#usage)
+* [How is it so much faster?](#how-is-it-so-much-faster)
 * [What is this?](#what-is-this)
 * [Why do do need this?](#why-do-do-need-this)
 * [Configuration](#configuration)
@@ -23,12 +24,16 @@
 
 ## Benefits over vanilla npm scripts
 
-* ~60% Faster than vanilla npm scripts due to cluster processes (multi-threading) and less overhead
+* ~300% (~330ms vs ~110ms) Faster than vanilla `npm run` or `npm-run-all` for a single command [See How](#how-is-it-so-much-faster)
+  * This means you save 220ms for every `npm run` that you would normally have!
 * Sharable npm scripts, so that projects you manage can be kept up to date easily
 * Independent from npm. This allows npm to run npm-preset through its own scripts
+  * Note that you probably only want to do this to keep it familiar for new users
 * The ability to run scripts in series or parallel
 * The ability to run scripts using wild cards
-* Long paths shortend based on the current package root
+* Long paths shortend based on the current preset/package root (can be turned of with --no-shorten)
+  * `echo /Users/Bill/Projects/some-awesome-thing/src` -> `echo src`
+  * `echo /Users/Bill/Projects/some-awesome-thing/node_modules/npm-preset-builder/config/test.js` -> `echo <npmp-builder>/config/test.js`
 * Any installed binary from node_modules can be run in npm-preset without an absolute path
 
 ## Usage
@@ -39,18 +44,34 @@ To install use npm:
 npm i npm-preset
 ```
 
-This will give you a binary called `npmp`. Which can:
+This will give you two binaries `npm-preset` and `npmp`. Which can:
 
-* run any of your current projects npm scripts in series or parallel similar to `npm-run-all`
+* If you don't want to use a preset or you just want to test it out you can add `scripts` to an `npm-preset` key in your package.json:
+```json
+{
+  "npm-preset": {
+    "scripts": {
+      "echo" : "echo hello npmp"
+    }
+  }
+}
+```
+Then run that command with `npmp echo`
+
 * You can use a `*` character to specify scripts ie: `build:*` will run `build:test` and `build:js` but not `build:js:other` or `build`
 * Use `npmp --help` to see what else it can do
 
-The real magic happens when you add a preset, such a `npm-preset-awesome`. This will allow you to run scripts from that preset! For instance if that preset implemented
-`build:something:awesome` and you run it with `npm build:something:awesome` it will run as an npm script for the current project with all paths local to the current project!
+The real magic happens when you add a preset, such a `npm-preset-awesome`. This will allow you to run scripts from that preset! For instance if that preset implemented `build:something:awesome` and you run it with `npmp build:something:awesome` it will run as an npmp script for the current project with all paths local to the current project!
+
+## How is it so much faster?
+1. It is optomized for performance
+1. It had much less overhead than npm
+1. It does everything it can asynchronously
+1. If it finds out that one npmp command is running another, and that command does not have any special shell operations. It doesn't create a child. Instead it uses the npmp function and passes it the arguments that it would habe run in a child. Since nodejs take about 80ms to startup this saves us all of that time!
 
 ## What is this?
 
-This takes npm scripts and makes them sharable across projects. This prevents updating projects that all follow similar guidelines individually. Think of it in the same vain as a "linter preset" similar to how eslint has presets, but instead of just being for linting it is for your whole build pipeline. Examples of how this would help:
+This takes npm scripts and makes them sharable across projects. This prevents updating projects that all follow similar guidelines individually. Think of it in the same vain as a "linter preset" similar to how eslint or babel has presets, but instead of just being for linting it is for your whole build pipeline. Examples of how this would help:
 
 * A bug was introduced in an update to a build tool
 * Linter rules were updates (this would be a major version if the rules became more strict)
@@ -60,7 +81,7 @@ This takes npm scripts and makes them sharable across projects. This prevents up
 
 ## Why do do need this?
 
-npm has a great task runner that it calls scripts, but trying to manage them between projects can be a pain. For JavaScript the build pipeline is a beast of its own and it often has bugs, improvements, and changes that need to be made constantly. Right now we manage this through a `yeoman` generator, but that means that every one of our packages needs a pull request for every single change. Eventually things fall behind. This project seeks to rectify that by making it a portable package that will be easily updated.
+npm has a great task runner that it calls scripts, but trying to manage them between projects can be a pain. For JavaScript the build pipeline is a beast of its own and it often has bugs, improvements, and changes that need to be made constantly. At my job we manage this through a `yeoman` generator, but that means that every one of our packages needs a pull request for every single change. Eventually things fall behind. This project seeks to rectify that by making it a portable package that will be easily updated.
 
 ## Configuration
 
@@ -130,7 +151,7 @@ Presets can be written in three formats:
 ### Things to know:
 
 * if you need to pass config files during a command you will want to use absolute paths to do so.
-* When a script is run process.env.NPM_PRESET_CONFIG will be set to the current `npm-preset` config. This should allow you to use any of the special variables from that file just about anywhere (babel config, rollup config, a random npm script)
+* When a script is run process.env.NPM_PRESET_CONFIG will be set to the current `npm-preset` config. This should allow you to use any of the special variables from that file just about anywhere (babel config, rollup config, a random node script)
 
 ### Examples
 

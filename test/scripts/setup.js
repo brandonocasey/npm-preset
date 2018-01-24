@@ -5,11 +5,25 @@ const fs = Promise.promisifyAll(require('fs'));
 const mkdirp = Promise.promisify(require('mkdirp'));
 const rimraf = Promise.promisify(require('rimraf'));
 const baseDir = path.join(__dirname, '..', '..');
-const pkg = require(path.join(baseDir, 'package.json'));
 const dirs = [
   path.join(baseDir, 'test', 'fixtures', 'unit-tests'),
   path.join(baseDir, 'test', 'fixtures', 'bench')
 ];
+
+const linkPkg = function(src, dest) {
+  const srcPkg = require(path.join(src, 'package.json'));
+  const promises = [
+    fs.symlinkAsync(src, path.join(dest, 'node_modules', srcPkg.name), 'dir')
+  ];
+
+  Object.keys(srcPkg.bin).forEach((binName) => {
+    const binPath = path.join(src, srcPkg.bin[binName]);
+
+    promises.push(fs.symlinkAsync(binPath, path.join(dest, 'node_modules', '.bin', binName), 'file'));
+  });
+
+  return Promise.all(promises);
+};
 
 Promise.all(Promise.map(dirs, function(dir) {
   const modules = path.join(dir, 'node_modules');
@@ -18,29 +32,25 @@ Promise.all(Promise.map(dirs, function(dir) {
   return rimraf(modules).then(() => {
     return mkdirp(path.join(modules, '.bin'));
   }).then(() => {
-    return fs.symlinkAsync(baseDir, path.join(modules, pkg.name), 'dir');
+    return linkPkg(baseDir, dir);
   }).then(() => {
-    return Promise.all(Promise.map(Object.keys(pkg.bin), (binName) => {
-      const binPath = path.join(baseDir, pkg.bin[binName]);
-
-      fs.symlinkAsync(binPath, path.join(modules, '.bin', binName), 'file');
-    }));
-  }).then(() => {
-    if (name !== 'unit-tests') {
-      return Promise.resolve();
+    if (name === 'unit-tests') {
+      return fs.writeFileAsync(path.join(dir, 'package.json'), JSON.stringify({
+        'name': 'unit-tests',
+        'version': '1.0.0',
+        'description': '',
+        'main': 'index.js',
+        'npm-preset': {scripts: {}},
+        'scripts': {},
+        'keywords': [],
+        'author': '',
+        'license': 'ISC'
+      }, null, 2));
+    } else if (name === 'bench') {
+      return linkPkg(path.join(baseDir, 'node_modules', 'npm-run-all'), dir);
     }
 
-    return fs.writeFileAsync(path.join(dir, 'package.json'), JSON.stringify({
-      'name': 'unit-tests',
-      'version': '1.0.0',
-      'description': '',
-      'main': 'index.js',
-      'npm-preset': {scripts: {}},
-      'scripts': {},
-      'keywords': [],
-      'author': '',
-      'license': 'ISC'
-    }, null, 2));
+    return Promise.resolve();
   }).then(() => {
     console.log(`Set up ${path.relative(baseDir, dir)}`);
   });

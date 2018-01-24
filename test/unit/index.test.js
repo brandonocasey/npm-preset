@@ -470,8 +470,8 @@ test('should shorten paths by default', (t) => {
   return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo ' + base }}}).then(() => {
     return promiseSpawn('npmp', ['echo'], {cwd: t.context.dir});
   }).then((result) => {
-    t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
-    t.true(new RegExp('<npmp>', 'g').test(result.stdout.trim()), 'stdout');
+    t.false(RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+    t.true(RegExp('<npmp>', 'g').test(result.stdout.trim()), 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
   });
 });
@@ -485,8 +485,8 @@ test('should shorten preset paths with short name', (t) => {
   }).then(() => {
     return promiseSpawn('npmp', ['echo'], {cwd: t.context.dir});
   }).then((result) => {
-    t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
-    t.true(new RegExp('<npmp-test>', 'g').test(result.stdout.trim()), 'stdout');
+    t.false(RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+    t.true(RegExp('<npmp-test>', 'g').test(result.stdout.trim()), 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
   });
 });
@@ -498,8 +498,8 @@ test('should shorten preset paths with long name', (t) => {
   return t.context.addPreset('npm-preset-test', {echo: 'echo ' + base}).then(() => {
     return promiseSpawn('npmp', ['echo'], {cwd: t.context.dir});
   }).then((result) => {
-    t.false(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
-    t.true(new RegExp('<npmp-test>', 'g').test(result.stdout.trim()), 'stdout');
+    t.false(RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+    t.true(RegExp('<npmp-test>', 'g').test(result.stdout.trim()), 'stdout');
     t.is(result.stderr.trim().length, 0, 'no stderr');
   });
 });
@@ -514,6 +514,19 @@ test('should shorten preset paths with long name', (t) => {
       t.is(result.stderr.trim(), 'no', 'stderr');
     });
   });
+
+  test(o + ' nested only', (t) => {
+    t.plan(2);
+    return t.context.modifyPkg({'npm-preset': {scripts: {echo: `npmp ${o} echo2`, echo2: 'echo no && echo hello 1>&2'}}}).then(() => {
+      return promiseSpawn('npmp', ['-co', 'echo2', 'echo', 'echo2'], {cwd: t.context.dir});
+    }).then((result) => {
+      const stderrs = result.stderr.trim().split('\n');
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(['hello', 'hello', 'hello'], stderrs, 'stderrs expected');
+      t.deepEqual(['no', 'no'], stdouts, 'stdouts expected');
+    });
+  });
 });
 
 ['-si', '--silent'].forEach(function(o) {
@@ -523,6 +536,18 @@ test('should shorten preset paths with long name', (t) => {
       return promiseSpawn('npmp', [o, 'echo'], {cwd: t.context.dir});
     }).then((result) => {
       t.is(result.stdout.trim().length, 0, 'no stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+
+  test(o + ' nested only', (t) => {
+    t.plan(2);
+    return t.context.modifyPkg({'npm-preset': {scripts: {echo: `npmp ${o} echo2`, echo2: 'echo hello'}}}).then(() => {
+      return promiseSpawn('npmp', ['-co', 'echo2', 'echo', 'echo2'], {cwd: t.context.dir});
+    }).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(['hello', 'hello'], stdouts, 'stdouts as expected');
       t.is(result.stderr.trim().length, 0, 'no stderr');
     });
   });
@@ -548,8 +573,22 @@ test('should shorten preset paths with long name', (t) => {
     return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'npmp echo2', echo2: 'echo ' + base}}}).then(() => {
       return promiseSpawn('npmp', [o, 'echo'], {cwd: t.context.dir});
     }).then((result) => {
-      t.true(new RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
-      t.false(new RegExp('<npmp>', 'g').test(result.stdout.trim()), 'stdout');
+      t.true(RegExp(base, 'g').test(result.stdout.trim()), 'stdout');
+      t.false(RegExp('<npmp>', 'g').test(result.stdout.trim()), 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+    });
+  });
+
+  test(o + ' nested only', (t) => {
+    const base = path.join(__dirname, '..', '..');
+
+    t.plan(2);
+    return t.context.modifyPkg({'npm-preset': {scripts: {echo: `npmp ${o} echo2`, echo2: 'echo ' + base}}}).then(() => {
+      return promiseSpawn('npmp', ['-co', 'echo2', 'echo', 'echo2'], {cwd: t.context.dir});
+    }).then((result) => {
+      const stdouts = result.stdout.trim().split('\n');
+
+      t.deepEqual(['<npmp>', base, '<npmp>'], stdouts, 'stdouts as expected');
       t.is(result.stderr.trim().length, 0, 'no stderr');
     });
   });
@@ -1217,7 +1256,7 @@ test('parallel: post failure', (t) => {
 
 test('&& works', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello && echo world'}}}).then(() => {
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo2: 'echo hello', echo: 'npmp echo2 && echo world'}}}).then(() => {
     return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
   }).then((result) => {
     const stdouts = result.stdout.trim().split('\n');
@@ -1228,7 +1267,7 @@ test('&& works', (t) => {
 
 test('|| works', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'false || echo world'}}}).then(() => {
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo2: 'exit 1', echo: 'npmp echo2 || echo world'}}}).then(() => {
     return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
   }).then((result) => {
     const stdouts = result.stdout.trim().split('\n');
@@ -1239,7 +1278,7 @@ test('|| works', (t) => {
 
 test('; works', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello; echo world'}}}).then(() => {
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo2: 'echo hello', echo: 'npmp echo2; echo world'}}}).then(() => {
     return promiseSpawn('npmp', ['-co', 'echo'], {cwd: t.context.dir});
   }).then((result) => {
     const stdouts = result.stdout.trim().split('\n');
@@ -1272,7 +1311,7 @@ test('$() works', (t) => {
 
 test('> works', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello world > test.txt'}}}).then(() => {
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo2: 'echo hello world', echo: 'npmp -co echo2 > test.txt'}}}).then(() => {
     return promiseSpawn('npmp', ['echo'], {cwd: t.context.dir});
   }).then((result) => {
     return fs.readFileAsync(path.join(t.context.dir, 'test.txt'), 'utf8');
@@ -1283,7 +1322,7 @@ test('> works', (t) => {
 
 test('>> works', (t) => {
   t.plan(1);
-  return t.context.modifyPkg({'npm-preset': {scripts: {echo: 'echo hello > test.txt', echo2: 'echo world >> test.txt'}}}).then(() => {
+  return t.context.modifyPkg({'npm-preset': {scripts: {echo3: 'echo world', echo2: 'echo hello', echo: 'npmp -co echo2 echo3 >> test.txt'}}}).then(() => {
     return promiseSpawn('npmp', ['echo', 'echo2'], {cwd: t.context.dir});
   }).then((result) => {
     return fs.readFileAsync(path.join(t.context.dir, 'test.txt'), 'utf8');

@@ -16,7 +16,7 @@ const TEN_MB = 10485760;
  * @returns {Promise}
  *          A promise that is resolved when the command exits
  */
-const exec = function(command) {
+const exec = function(con, command) {
   return new Promise((resolve, reject) => {
     const child = cpExec(command, {
       maxBuffer: TEN_MB,
@@ -25,8 +25,12 @@ const exec = function(command) {
       shell: true
     });
 
-    child.stdout.pipe(process.stdout);
-    child.stderr.pipe(process.stderr);
+    child.stdout.on('data', (d) => {
+      con.stdout(d);
+    });
+    child.stderr.on('data', (d) => {
+      con.stderr(d);
+    });
     const kill = () => child.kill();
 
     process.on('SIGINT', kill);

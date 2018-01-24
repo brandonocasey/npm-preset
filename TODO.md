@@ -1,7 +1,5 @@
 ## MUST DO
 * Check benchmarks after: https://github.com/nodejs/node/issues/17058
-* use convential changelog
-* automate changelog release update
 * use prettier instead of eslint
 
 ## Stretch Goals

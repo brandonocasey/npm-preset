@@ -26,7 +26,27 @@
 
     }
   },
-  "scripts": {},
+  "scripts": {
+    "baseline": "echo hello world",
+
+    "serial:single": "npm run baseline",
+    "serial:double": "npm-run-all baseline baseline",
+    "serial:triple": "npm-run-all baseline baseline baseline",
+    "serial:nested": "npm run serial:nested1",
+    "serial:nested1": "npm run serial:nested2",
+    "serial:nested2": "npm run serial:nested3",
+    "serial:nested3": "npm run serial:nested4",
+    "serial:nested4": "npm run baseline",
+
+    "parallel:single": "npm-run-all -p baseline",
+    "parallel:double": "npm-run-all -p baseline baseline",
+    "parallel:triple": "npm-run-all -p baseline baseline baseline",
+    "parallel:nested": "npm-run-all -p parallel:nested1",
+    "parallel:nested1": "npm-run-all -p parallel:nested2",
+    "parallel:nested2": "npm-run-all -p parallel:nested3",
+    "parallel:nested3": "npm-run-all -p parallel:nested4",
+    "parallel:nested4": "npm-run-all -p baseline"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"

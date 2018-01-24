@@ -3,20 +3,23 @@ const childProcess = require('child_process');
 const path = require('path');
 const cwd = path.join(__dirname, '..', 'fixtures', 'bench');
 
-const benchmarks = [
-  {name: 'baseline', cmd: 'echo hello world'},
-  {name: 'npmp baseline', cmd: 'npmp baseline'},
+const benchmarks = [{name: 'baseline', cmd: 'echo hello world'}];
 
-  {name: 'serial:single', cmd: 'npmp serial:single'},
-  {name: 'serial:double', cmd: 'npmp serial:double'},
-  {name: 'serial:triple', cmd: 'npmp serial:triple'},
-  {name: 'serial:nested', cmd: 'npmp serial:nested'},
+[
+  'baseline',
+  'serial:single',
+  'serial:double',
+  'serial:triple',
+  'serial:nested',
 
-  {name: 'parallel:single', cmd: 'npmp parallel:single'},
-  {name: 'parallel:double', cmd: 'npmp parallel:double'},
-  {name: 'parallel:triple', cmd: 'npmp parallel:triple'},
-  {name: 'parallel:nested', cmd: 'npmp parallel:nested'}
-];
+  'parallel:single',
+  'parallel:double',
+  'parallel:triple',
+  'parallel:nested'
+].forEach(function(scriptName) {
+  benchmarks.push({name: `npm run ${scriptName}`, cmd: `npm run ${scriptName}`});
+  benchmarks.push({name: `npmp ${scriptName}`, cmd: `npmp ${scriptName}`});
+});
 
 benchmarks.forEach(function(benchmark) {
   console.log(`benchmark: ${benchmark.name}`);

@@ -1,3 +1,16 @@
+<a name="1.4.0"></a>
+# [1.4.0](https://github.com/brandonocasey/npm-preset/compare/v1.3.1...v1.4.0) (2018-01-24)
+
+### Chores
+
+* create changelog and automate release update ([6937cd0](https://github.com/brandonocasey/npm-preset/commit/6937cd0))
+
+### Performance Improvements
+
+* add npm with npm-run-all to benchmark tests ([70bc9ff](https://github.com/brandonocasey/npm-preset/commit/70bc9ff))
+* major speedup - only create npmp child sometimes ([2ec39aa](https://github.com/brandonocasey/npm-preset/commit/2ec39aa))
+* remove optimization killers ([e21e204](https://github.com/brandonocasey/npm-preset/commit/e21e204))
+
 <a name="1.3.1"></a>
 ## [1.3.1](https://github.com/brandonocasey/npm-preset/compare/v1.3.0...v1.3.1) (2018-01-23)
 

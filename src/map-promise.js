@@ -1,13 +1,7 @@
 'use strict';
 
-const mapPromise = (array, fn) => {
-  const promises = [];
-
-  array.forEach((v) => {
-    promises.push(fn(v));
-  });
-
-  return Promise.all(promises);
+const mapPromise = function(array, fn) {
+  return Promise.all(array.map((v) => fn(v)));
 };
 
 module.exports = mapPromise;

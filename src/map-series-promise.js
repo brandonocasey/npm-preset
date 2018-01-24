@@ -1,6 +1,6 @@
 'use strict';
 
-const mapSeriesPromise = (array, fn) => {
+const mapSeriesPromise = function(array, fn) {
   const nextValue = array.shift();
   const promise = fn(nextValue);
 

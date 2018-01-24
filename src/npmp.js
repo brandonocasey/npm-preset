@@ -11,7 +11,8 @@ const scriptMatches = require('./script-matches');
 const mapPromise = require('./map-promise');
 const mapSeriesPromise = require('./map-series-promise');
 
-const npmp = function(args) {
+const npmp = function(argv) {
+  const args = argv;
   const options = {
     version: false,
     help: false,

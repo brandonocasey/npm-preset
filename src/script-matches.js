@@ -7,9 +7,7 @@ const scriptMatches = function(scriptName) {
     return [scriptName];
   }
 
-  scriptName = scriptName.replace('*', '');
-
-  const regex = RegExp(`^${scriptName}[^:]*$`);
+  const regex = RegExp(`^${scriptName.replace('*', '')}[^:]*$`);
 
   return Object.keys(config.scripts)
     .filter((name) => regex.test(name));

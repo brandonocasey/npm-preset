@@ -96,10 +96,10 @@ const npmp = function(argv) {
     process.exit(0);
   }
 
-  filter(options);
+  const con = filter(options);
 
   if (options.version) {
-    console.log(pkg.version);
+    con.log(pkg.version);
     process.exit();
   }
 
@@ -120,30 +120,30 @@ const npmp = function(argv) {
     });
 
     // print scripts based on where they come from
-    console.log();
+    con.log();
     Object.keys(sources).sort().forEach(function(source) {
-      console.log(source + ':');
+      con.log(source + ':');
 
       Object.keys(sources[source]).sort().forEach(function(scriptName) {
-        console.log('  "' + scriptName + '": "' + sources[source][scriptName] + '"');
+        con.log('  "' + scriptName + '": "' + sources[source][scriptName] + '"');
       });
-      console.log();
+      con.log();
     });
     process.exit(0);
   }
 
   if (!options.tasks.length) {
-    console.error('Must specify a script to run with -s, -p, or without an arg');
+    con.error('Must specify a script to run with -s, -p, or without an arg');
     process.exit(1);
   }
 
   // run through each task, before going to the next one
   return mapSeriesPromise(options.tasks, function(task) {
     if (task.type === 'series') {
-      return mapSeriesPromise(task.scripts, (s) => runScript(s, options.subArgs));
+      return mapSeriesPromise(task.scripts, (s) => runScript(npmp, con, s, options.subArgs));
     }
 
-    return mapPromise(task.scripts, (s) => runScript(s, options.subArgs));
+    return mapPromise(task.scripts, (s) => runScript(npmp, con, s, options.subArgs));
   });
 };
 

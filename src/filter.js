@@ -1,4 +1,6 @@
 'use strict';
+/* eslint-disable no-console */
+/* eslint-disable max-len */
 const config = require('./config');
 const path = require('path');
 const silence = (s) => '';
@@ -17,45 +19,6 @@ config.npmPreset.presets.forEach(function(p) {
 
 regexes.push({find: RegExp(path.join(__dirname, '..'), 'g'), replace: '<npmp>'});
 
-const intercept = function(stdoutIntercept, stderrIntercept) {
-  const interceptors = {
-    stderr: stderrIntercept || stdoutIntercept,
-    stdout: stdoutIntercept
-  };
-  const oldWrite = {
-    stdout: process.stdout.write,
-    stderr: process.stderr.write
-  };
-
-  Object.keys(interceptors).forEach((fd) => {
-    // skip interceptors with a value of false;
-    if (interceptors[fd] === false) {
-      return;
-    }
-    process[fd].write = function() {
-      // using array.splice would mean that this function
-      // could not be optimized
-      // see https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#32-leaking-arguments
-      const args = new Array(arguments.length);
-
-      for (let i = 0; i < args.length; ++i) {
-        // i is always valid index in the arguments object
-        args[i] = arguments[i];
-      }
-
-      args[0] = interceptors[fd](args[0], stdoutIntercept);
-
-      oldWrite[fd].apply(process[fd], args);
-    };
-  });
-
-  /*
-  // restore
-  return () => Object.keys(oldWrite).forEach((fd) => {
-    process[fd].write = oldWrite[fd];
-  });*/
-};
-
 /**
  * shorten npm-preset paths so that we dont print
  * obnoxiously long path strings to terminal
@@ -67,26 +30,24 @@ const intercept = function(stdoutIntercept, stderrIntercept) {
  *         The shortened string
  */
 const shorten = function(str) {
-  /* istanbul ignore if */
-  if (!str) {
-    return str;
-  }
+  let newstring = str;
 
-  if (str && str.toString) {
-    str = str.toString();
+  /* istanbul ignore if */
+  if (!newstring || typeof newstring !== 'string') {
+    return newstring;
   }
 
   regexes.forEach(function(regex) {
-    str = str.replace(regex.find, regex.replace);
+    newstring = newstring.replace(regex.find, regex.replace);
   });
-  return str;
+  return newstring;
 };
 
 const filter = function(options) {
   options = options || {};
 
-  let stderrFilter = false;
-  let stdoutFilter = false;
+  let stderrFilter = (s) => s;
+  let stdoutFilter = (s) => s;
 
   if (!options.shorten || process.env.NPM_PRESET_NO_SHORTEN === '1') {
     process.env.NPM_PRESET_NO_SHORTEN = '1';
@@ -115,7 +76,61 @@ const filter = function(options) {
     process.env.NPM_PRESET_COMMANDS_ONLY = '1';
   }
 
-  intercept(stdoutFilter, stderrFilter);
+  return {
+    stdout() {
+      let i = arguments.length;
+      let args = [];
+
+      while (i--) {
+        args[i] = arguments[i];
+      }
+
+      args = args
+        .map((a) => stdoutFilter(a))
+        .filter((a) => a.length > 0)
+        .forEach((a) => process.stdout.write(a));
+    },
+    stderr() {
+      let i = arguments.length;
+      let args = [];
+
+      while (i--) {
+        args[i] = arguments[i];
+      }
+
+      args = args
+        .map((a) => stderrFilter(a))
+        .filter((a) => a.length > 0)
+        .forEach((a) => process.stderr.write(a));
+    },
+    log() {
+      let i = arguments.length;
+      let args = [];
+
+      while (i--) {
+        args[i] = arguments[i];
+      }
+
+      args = args
+        .map((a) => stdoutFilter(a));
+
+      console.log.apply(console, args);
+    },
+    error() {
+      let i = arguments.length;
+      let args = [];
+
+      while (i--) {
+        args[i] = arguments[i];
+      }
+
+      args = args
+        .map((a) => stderrFilter(a));
+
+      console.error.apply(console, args);
+    }
+  };
+
 };
 
 module.exports = filter;

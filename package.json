@@ -40,7 +40,9 @@
   "engines": {
     "node": ">=4"
   },
-  "dependencies": {},
+  "dependencies": {
+    "shell-quote": "^1.6.1"
+  },
   "ava": {
     "timeout": "15s"
   },

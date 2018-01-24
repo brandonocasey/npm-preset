@@ -1,6 +1,10 @@
 ## MUST DO
 * Check benchmarks after: https://github.com/nodejs/node/issues/17058
-* use prettier instead of eslint
+* tab complete via https://www.npmjs.com/package/tabtab
+* remove vjs specifics
+  * eslint -> prettier
+  * convention-changelog
+* automate github release changelog
 
 ## Stretch Goals
 * error colors (emulate npm?)

@@ -74,14 +74,21 @@ ${cpuMarkdown}
 ## What was run
 
 ### npm-preset scripts
+\`\`\`json
 ${JSON.stringify(benchPkg['npm-preset'].scripts, null, 2)}
+\`\`\`
 
 ### npm scripts
+\`\`\`json
 ${JSON.stringify(benchPkg.scripts, null, 2)}
+\`\`\`
+
 
 ## Results
 
-${results}`);
+\`\`\`sh
+${results}
+\`\`\``);
 
   console.log('Wrote results to BENCHMARKS.md');
 });

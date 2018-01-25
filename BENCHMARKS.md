@@ -1,6 +1,6 @@
 # Benchmarks
 
-Last run in version 1.4.0 on 01/25/2018 @ 01:38:44
+Last run in version 1.5.0 on 01/25/2018 @ 02:39:39
 
 ## Table of Contents
 
@@ -79,135 +79,132 @@ Last run in version 1.4.0 on 01/25/2018 @ 01:38:44
 
 ```sh
 benchmarking bench/echo hello world
-time                 5.873 ms   (5.643 ms .. 6.141 ms)
-                     0.993 R²   (0.990 R² .. 0.998 R²)
-mean                 6.425 ms   (6.299 ms .. 6.646 ms)
-std dev              453.1 μs   (296.9 μs .. 760.0 μs)
-variance introduced by outliers: 42% (moderately inflated)
+time                 5.468 ms   (5.416 ms .. 5.516 ms)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 5.463 ms   (5.434 ms .. 5.505 ms)
+std dev              106.5 μs   (77.47 μs .. 162.5 μs)
 
 benchmarking bench/npm run baseline
-time                 361.5 ms   (348.8 ms .. 379.2 ms)
-                     1.000 R²   (0.999 R² .. 1.000 R²)
-mean                 357.8 ms   (352.8 ms .. 360.7 ms)
-std dev              4.500 ms   (0.0 s .. 5.076 ms)
-variance introduced by outliers: 19% (moderately inflated)
+time                 329.8 ms   (325.4 ms .. 336.4 ms)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 327.4 ms   (325.6 ms .. 329.2 ms)
+std dev              2.281 ms   (1.059 ms .. 2.898 ms)
+variance introduced by outliers: 16% (moderately inflated)
 
 benchmarking bench/npmp baseline
-time                 114.5 ms   (111.9 ms .. 119.0 ms)
-                     0.998 R²   (0.993 R² .. 1.000 R²)
-mean                 115.0 ms   (112.7 ms .. 117.0 ms)
-std dev              3.262 ms   (2.183 ms .. 5.057 ms)
-variance introduced by outliers: 11% (moderately inflated)
+time                 106.9 ms   (104.2 ms .. 109.2 ms)
+                     0.999 R²   (0.997 R² .. 1.000 R²)
+mean                 106.1 ms   (105.2 ms .. 107.4 ms)
+std dev              1.669 ms   (1.158 ms .. 2.208 ms)
 
 benchmarking bench/npm run serial:single
-time                 737.6 ms   (687.6 ms .. 788.7 ms)
+time                 695.3 ms   (655.9 ms .. 767.3 ms)
                      0.999 R²   (0.998 R² .. 1.000 R²)
-mean                 732.1 ms   (722.0 ms .. 739.5 ms)
-std dev              11.26 ms   (0.0 s .. 12.84 ms)
+mean                 670.3 ms   (658.9 ms .. 689.0 ms)
+std dev              16.34 ms   (0.0 s .. 17.37 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp serial:single
-time                 113.0 ms   (111.4 ms .. 114.4 ms)
-                     1.000 R²   (0.999 R² .. 1.000 R²)
-mean                 116.2 ms   (115.2 ms .. 117.6 ms)
-std dev              1.684 ms   (1.103 ms .. 2.143 ms)
-variance introduced by outliers: 11% (moderately inflated)
+time                 110.5 ms   (106.1 ms .. 116.4 ms)
+                     0.997 R²   (0.992 R² .. 1.000 R²)
+mean                 109.4 ms   (107.1 ms .. 111.1 ms)
+std dev              3.162 ms   (2.390 ms .. 4.211 ms)
 
 benchmarking bench/npm run serial:double
-time                 1.251 s    (1.102 s .. 1.378 s)
-                     0.998 R²   (0.994 R² .. 1.000 R²)
-mean                 1.268 s    (1.249 s .. 1.284 s)
-std dev              26.07 ms   (0.0 s .. 28.28 ms)
+time                 1.221 s    (1.180 s .. 1.257 s)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 1.187 s    (1.165 s .. 1.199 s)
+std dev              19.08 ms   (0.0 s .. 20.25 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp serial:double
-time                 122.3 ms   (119.7 ms .. 124.7 ms)
-                     0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 126.7 ms   (124.8 ms .. 128.8 ms)
-std dev              3.027 ms   (2.169 ms .. 3.758 ms)
+time                 120.5 ms   (115.9 ms .. 125.0 ms)
+                     0.999 R²   (0.997 R² .. 1.000 R²)
+mean                 122.5 ms   (120.4 ms .. 125.0 ms)
+std dev              3.353 ms   (2.543 ms .. 4.196 ms)
 variance introduced by outliers: 11% (moderately inflated)
 
 benchmarking bench/npm run serial:triple
-time                 1.616 s    (1.605 s .. 1.638 s)
+time                 1.566 s    (NaN s .. 1.602 s)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 1.611 s    (1.608 s .. 1.615 s)
-std dev              4.143 ms   (272.4 as .. 4.436 ms)
+mean                 1.554 s    (1.539 s .. 1.562 s)
+std dev              12.83 ms   (0.0 s .. 13.54 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp serial:triple
-time                 131.4 ms   (128.8 ms .. 133.3 ms)
-                     1.000 R²   (0.999 R² .. 1.000 R²)
-mean                 136.1 ms   (134.2 ms .. 140.3 ms)
-std dev              3.946 ms   (1.159 ms .. 5.986 ms)
+time                 131.4 ms   (127.9 ms .. 133.0 ms)
+                     0.999 R²   (0.998 R² .. 1.000 R²)
+mean                 132.6 ms   (131.1 ms .. 134.1 ms)
+std dev              2.129 ms   (1.412 ms .. 3.146 ms)
 variance introduced by outliers: 11% (moderately inflated)
 
 benchmarking bench/npm run serial:nested
-time                 2.218 s    (2.178 s .. 2.291 s)
+time                 2.117 s    (2.046 s .. 2.156 s)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 2.254 s    (2.235 s .. 2.270 s)
-std dev              24.10 ms   (0.0 s .. 26.79 ms)
+mean                 2.103 s    (2.095 s .. 2.115 s)
+std dev              10.99 ms   (0.0 s .. 11.72 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp serial:nested
-time                 118.9 ms   (114.8 ms .. 123.9 ms)
-                     0.998 R²   (0.995 R² .. 1.000 R²)
-mean                 119.5 ms   (117.8 ms .. 120.9 ms)
-std dev              2.142 ms   (1.350 ms .. 2.920 ms)
+time                 115.9 ms   (112.7 ms .. 118.9 ms)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 116.4 ms   (115.1 ms .. 117.6 ms)
+std dev              1.874 ms   (1.235 ms .. 2.537 ms)
 variance introduced by outliers: 11% (moderately inflated)
 
 benchmarking bench/npm run parallel:single
-time                 894.9 ms   (882.2 ms .. 921.1 ms)
-                     1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 903.2 ms   (897.4 ms .. 907.7 ms)
-std dev              6.951 ms   (0.0 s .. 7.805 ms)
+time                 863.7 ms   (810.1 ms .. 893.4 ms)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 869.6 ms   (860.9 ms .. 875.2 ms)
+std dev              8.479 ms   (0.0 s .. 9.780 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp parallel:single
-time                 108.4 ms   (103.1 ms .. 111.2 ms)
-                     0.998 R²   (0.994 R² .. 1.000 R²)
-mean                 114.4 ms   (111.9 ms .. 116.8 ms)
-std dev              3.879 ms   (2.989 ms .. 4.986 ms)
+time                 111.7 ms   (109.7 ms .. 114.3 ms)
+                     0.999 R²   (0.998 R² .. 1.000 R²)
+mean                 113.7 ms   (112.4 ms .. 114.9 ms)
+std dev              1.867 ms   (1.359 ms .. 2.309 ms)
 variance introduced by outliers: 11% (moderately inflated)
 
 benchmarking bench/npm run parallel:double
-time                 908.3 ms   (880.4 ms .. 920.7 ms)
+time                 921.3 ms   (897.5 ms .. 936.7 ms)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 909.8 ms   (905.3 ms .. 912.5 ms)
-std dev              4.181 ms   (0.0 s .. 4.785 ms)
+mean                 919.0 ms   (916.7 ms .. 923.4 ms)
+std dev              3.788 ms   (0.0 s .. 3.846 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp parallel:double
-time                 117.4 ms   (113.8 ms .. 119.0 ms)
-                     0.999 R²   (0.998 R² .. 1.000 R²)
-mean                 119.6 ms   (118.1 ms .. 122.0 ms)
-std dev              2.777 ms   (706.7 μs .. 4.499 ms)
+time                 119.9 ms   (117.5 ms .. 121.4 ms)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 120.7 ms   (119.6 ms .. 121.2 ms)
+std dev              1.154 ms   (782.9 μs .. 1.604 ms)
 variance introduced by outliers: 11% (moderately inflated)
 
 benchmarking bench/npm run parallel:triple
-time                 976.2 ms   (943.8 ms .. 1.004 s)
-                     1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 983.0 ms   (976.3 ms .. 988.5 ms)
-std dev              8.489 ms   (0.0 s .. 9.386 ms)
+time                 989.9 ms   (894.5 ms .. 1.046 s)
+                     0.999 R²   (0.997 R² .. 1.000 R²)
+mean                 1.011 s    (992.6 ms .. 1.022 s)
+std dev              16.71 ms   (0.0 s .. 18.89 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp parallel:triple
-time                 122.7 ms   (117.9 ms .. 126.2 ms)
-                     0.999 R²   (0.998 R² .. 1.000 R²)
-mean                 125.4 ms   (123.8 ms .. 127.3 ms)
-std dev              2.592 ms   (1.940 ms .. 3.475 ms)
+time                 121.5 ms   (114.0 ms .. 130.1 ms)
+                     0.997 R²   (0.994 R² .. 1.000 R²)
+mean                 129.3 ms   (126.3 ms .. 132.6 ms)
+std dev              4.867 ms   (3.733 ms .. 6.093 ms)
 variance introduced by outliers: 11% (moderately inflated)
 
 benchmarking bench/npm run parallel:nested
-time                 2.886 s    (2.808 s .. 2.986 s)
+time                 2.923 s    (2.840 s .. 2.978 s)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 2.908 s    (2.893 s .. 2.922 s)
-std dev              25.05 ms   (0.0 s .. 25.26 ms)
+mean                 2.923 s    (2.914 s .. 2.931 s)
+std dev              13.04 ms   (0.0 s .. 14.16 ms)
 variance introduced by outliers: 19% (moderately inflated)
 
 benchmarking bench/npmp parallel:nested
-time                 109.3 ms   (97.79 ms .. 120.3 ms)
-                     0.993 R²   (0.990 R² .. 0.999 R²)
-mean                 118.6 ms   (114.0 ms .. 122.0 ms)
-std dev              5.705 ms   (4.080 ms .. 7.703 ms)
-variance introduced by outliers: 11% (moderately inflated)
+time                 107.4 ms   (94.64 ms .. 113.1 ms)
+                     0.990 R²   (0.970 R² .. 1.000 R²)
+mean                 119.0 ms   (113.8 ms .. 127.4 ms)
+std dev              9.962 ms   (4.545 ms .. 14.29 ms)
+variance introduced by outliers: 23% (moderately inflated)
 ```

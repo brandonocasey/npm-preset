@@ -1,3 +1,30 @@
+<a name="1.5.0"></a>
+# [1.5.0](https://github.com/brandonocasey/npm-preset/compare/v1.3.1...v1.5.0) (2018-01-25)
+
+### Features
+
+* add --save-npm and --save-husky ([75a8fd2](https://github.com/brandonocasey/npm-preset/commit/75a8fd2))
+* tab completion ([c88e070](https://github.com/brandonocasey/npm-preset/commit/c88e070))
+
+### Bug Fixes
+
+* benchmark output ([d827de0](https://github.com/brandonocasey/npm-preset/commit/d827de0))
+
+### Chores
+
+* create changelog and automate release update ([7de68d6](https://github.com/brandonocasey/npm-preset/commit/7de68d6))
+
+### Documentation
+
+* add CONTRIBUTING.md ([a8b53cf](https://github.com/brandonocasey/npm-preset/commit/a8b53cf))
+* update README.md ([abe3065](https://github.com/brandonocasey/npm-preset/commit/abe3065))
+
+### Performance Improvements
+
+* add npm with npm-run-all to benchmark tests ([6641d1b](https://github.com/brandonocasey/npm-preset/commit/6641d1b))
+* major speedup - only create npmp child sometimes ([9214c4d](https://github.com/brandonocasey/npm-preset/commit/9214c4d))
+* remove optimization killers ([e21e204](https://github.com/brandonocasey/npm-preset/commit/e21e204))
+
 <a name="1.4.0"></a>
 # [1.4.0](https://github.com/brandonocasey/npm-preset/compare/v1.3.1...v1.4.0) (2018-01-24)
 

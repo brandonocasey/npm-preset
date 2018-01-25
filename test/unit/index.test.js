@@ -139,6 +139,22 @@ test.afterEach.always((t) => {
   });
 });
 
+['-c', '--completion'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(3);
+    return t.context.modifyPkg({'npm-preset': {scripts: {touch: 'touch ./file.test'}}}).then(() => {
+      return promiseSpawn('npmp', [o, 'touch'], {cwd: t.context.dir});
+    }).then((result) => {
+      t.not(result.stdout.trim(), 0, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+
+      return exists(path.join(t.context.dir, 'file.test'));
+    }).then((results) => {
+      t.is(results[0].exists, false, 'file.test not created');
+    });
+  });
+});
+
 ['-sh', '--save-husky'].forEach(function(o) {
   test(o, (t) => {
     t.plan(4);
@@ -1071,7 +1087,7 @@ test('parallel: second exit failure', (t) => {
 
   return t.context.modifyPkg({'npm-preset': {scripts: {
     one: 'echo test',
-    two: 'sleep 1 && exit 1'
+    two: 'sleep 2 && exit 1'
   }}}).then(() => {
     return promiseSpawn('npmp', ['--commands-only', '-p', 'one', 'two'], {cwd: t.context.dir, ignoreExitCode: true});
   }).then((result) => {

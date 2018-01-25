@@ -12,6 +12,7 @@ const mapPromise = require('./map-promise');
 const mapSeriesPromise = require('./map-series-promise');
 const saveHusky = require('./save-husky');
 const saveNpm = require('./save-npm');
+const childProcess = require('child_process');
 
 const npmp = function(argv) {
   const args = argv;
@@ -23,6 +24,7 @@ const npmp = function(argv) {
     silent: false,
     commandsOnly: false,
     printConfig: false,
+    completion: false,
     shorten: true,
     saveNpm: false,
     saveHusky: false,
@@ -41,6 +43,7 @@ const npmp = function(argv) {
     console.log('  -s,  --serial   [scripts...]     An alias for series');
     console.log('  -sn, --save-npm                  Save npmp scripts that match npm lifecycle to npm.scripts');
     console.log('  -sh, --save-husky                Save npmp scripts that match husky git hooks');
+    console.log('  -c,  --completion                Write npmp fish/zsh/bash competion to stdout');
     console.log('  -V,  --version                   Print version and exit');
     console.log('  -h,  --help                      Print usage and exit');
     console.log('  -q,  --quiet                     Only print errors and warnings');
@@ -88,6 +91,8 @@ const npmp = function(argv) {
       options.saveHusky = true;
     } else if ((/^(-sn|--save-npm)$/).test(arg)) {
       options.saveNpm = true;
+    } else if ((/^(-c|--completion)$/).test(arg)) {
+      options.completion = true;
     } else {
       const lastTask = options.tasks[options.tasks.length - 1];
       const scripts = scriptMatches(arg);
@@ -104,6 +109,15 @@ const npmp = function(argv) {
     delete config.scripts;
     delete config.pkg;
     console.log(JSON.stringify(config, null, 2));
+    process.exit(0);
+  }
+
+  if (options.completion) {
+    // ignore stdout
+    const stdio = ['inherit', 'inherit', 'ignore'];
+
+    childProcess.execSync('tabtab install --stdout --name npmp --completer npmp-complete', {stdio});
+    childProcess.execSync('tabtab install --stdout --name npm-preset --completer npmp-complete', {stdio});
     process.exit(0);
   }
 
@@ -175,6 +189,7 @@ const npmp = function(argv) {
 // * ./npmp
 
 /* istanbul ignore if */
+
 if (require.main === module) {
   const final = (result) => process.exit(result.code);
 

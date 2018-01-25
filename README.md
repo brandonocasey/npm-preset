@@ -13,6 +13,7 @@
   * [using the command line](#using-the-command-line)
   * [adding scripts via  package.json](#adding-scripts-via--packagejson)
   * [adding scripts via presets](#adding-scripts-via-presets)
+  * [Tab completion](#tab-completion)
 * [How is it so much faster?](#how-is-it-so-much-faster)
 * [What is this and why do we need it?](#what-is-this-and-why-do-we-need-it)
 * [Configuration](#configuration)
@@ -96,6 +97,12 @@ Then test it by running that command with `npmp echo`
 ### adding scripts via presets
 
 The real magic happens when you add a preset, such a `npm-preset-awesome`. This will allow you to run scripts from that preset! For instance if that preset implemented `build:something:awesome`. You can then run it with `npmp build:something:awesome` (if its installed). It will then run as an npmp script for the current project with all paths local to the current project!
+
+### Tab completion
+
+Add the output from `npmp --completion` to your `~/.bashrc` so that it will be sourced on login. You can then source that file right away.
+
+Tab completion is done using [`tabtab`](https://github.com/mklabs/node-tabtab) and a third binary that is only used for tab completion called: `npmp-complete`.
 
 ## How is it so much faster?
 

@@ -1,12 +1,10 @@
 ## MUST DO
 * Check benchmarks after: https://github.com/nodejs/node/issues/17058
-* tab complete via https://www.npmjs.com/package/tabtab
 * remove vjs specifics
   * eslint -> prettier
   * convention-changelog
   * remark-lint
-* --verify to run npm preset verification
-* --update-npm-lifecycle to update npm.scrpits with lifecycle scripts
+* fix `. <(npmp --completion)`
 
 ## Stretch Goals
 * error colors (emulate npm?)

@@ -4,7 +4,8 @@
   "description": "Faster, sharable, and parallel npm scripts",
   "bin": {
     "npmp": "./src/npmp.js",
-    "npm-preset": "./src/npmp.js"
+    "npm-preset": "./src/npmp.js",
+    "npmp-complete": "./src/npmp-complete.js"
   },
   "scripts": {
     "prebench": "npm run test-setup",
@@ -14,6 +15,10 @@
     "cover": "nyc ava test/unit/*.test.js --timeout '120s'",
     "test": "ava test/unit/*.test.js",
     "posttest": "npm run lint",
+    "tab:test": "export cmd=\"npmp\" && DEBUG=\"tabtab*\" COMP_POINT=\"4\" COMP_LINE=\"$cmd\" COMP_CWORD=\"$cmd\" npmp-complete completion -- npmp $cmd",
+    "tab:install": "npm run tab:install:npmp && npm run tab:install:npm-preset",
+    "tab:install:npmp": "tabtab install --name npmp --completer npmp-complete",
+    "tab:install:npm-preset": "tabtab install --name npm-preset --completer npmp-complete",
     "lint": "npm run lint:js && npm run lint:docs",
     "lint:js": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",
     "lint:docs": "remark CONTRIBUTING.md README.md BENCHMARKS.md '.github/*.md' -r scripts/remark-lint.js",
@@ -46,7 +51,8 @@
     "node": ">=4"
   },
   "dependencies": {
-    "shell-quote": "^1.6.1"
+    "shell-quote": "^1.6.1",
+    "tabtab": "^2.2.2"
   },
   "ava": {
     "timeout": "15s"

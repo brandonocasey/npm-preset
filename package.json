@@ -14,8 +14,12 @@
     "cover": "nyc ava test/unit/*.test.js --timeout '120s'",
     "test": "ava test/unit/*.test.js",
     "posttest": "npm run lint",
-    "lint": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",
+    "lint": "npm run lint:js && npm run lint:docs",
+    "lint:js": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",
+    "lint:docs": "remark README.md BENCHMARKS.md '.github/*.md' -r scripts/remark-lint.js",
+    "docs:toc": "remark README.md BENCHMARKS.md -o -r scripts/remark-toc.js ",
     "prepush": "npm run lint",
+    "precommit": "npm run docs:toc && git add README.md BENCHMARKS.md",
     "version": "node scripts/version.js"
   },
   "repository": {
@@ -61,6 +65,9 @@
     "ncp": "^2.0.0",
     "npm-run-all": "^4.1.2",
     "nyc": "^11.4.1",
+    "remark-cli": "^5.0.0",
+    "remark-preset-lint-videojs": "^1.0.2",
+    "remark-toc": "^5.0.0",
     "rimraf": "^2.6.2",
     "semver": "^5.5.0",
     "uuid": "^3.1.0"

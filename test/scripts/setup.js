@@ -7,7 +7,8 @@ const rimraf = Promise.promisify(require('rimraf'));
 const baseDir = path.join(__dirname, '..', '..');
 const dirs = [
   path.join(baseDir, 'test', 'fixtures', 'unit-tests'),
-  path.join(baseDir, 'test', 'fixtures', 'bench')
+  path.join(baseDir, 'test', 'fixtures', 'bench'),
+  path.join(baseDir, 'test', 'fixtures', 'playground')
 ];
 
 const linkPkg = function(src, dest) {

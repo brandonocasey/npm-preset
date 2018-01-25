@@ -5,7 +5,6 @@
   * eslint -> prettier
   * convention-changelog
   * remark-lint
-* automate github release changelog
 * --verify to run npm preset verification
 * --update-npm-lifecycle to update npm.scrpits with lifecycle scripts
 

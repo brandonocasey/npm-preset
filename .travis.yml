@@ -2,22 +2,31 @@ sudo: false
 dist: trusty
 language: node_js
 node_js:
-- 'lts/*'
+- lts/*
 - 4
 - 6
-
-# greenkeeper support
 before_install:
-  # package-lock.json was introduced in npm@5
-  - npm install -g npm@5 # skip this if you are using node 9
-  - npm install -g greenkeeper-lockfile@1
+- npm install -g npm@5
+- npm install -g greenkeeper-lockfile@1
 before_script: greenkeeper-lockfile-update
 script: npm run cover -- --verbose
 after_script: greenkeeper-lockfile-upload
-
 after_success:
-  - nyc report --reporter=text-lcov | coveralls
+- nyc report --reporter=text-lcov | coveralls
+
+deploy:
+  provider: npm
+  on:
+    tags: true
+  api_key:
+    secure: jFlXR6tBCstCaP4XE79FGdsbaktwuXxe2o0BhQgX/NUopPBM71H0k3CCZM13C8yZtuda0io4g95ULkLzIUiBqSrUDcN9y9fALzq//AgRS0citfks3+Z/WvbFcI237+kPxVimuB870TwaUrD9jUQ6BWi+sdeyJjsXTrEGN5X4of4lPHU34nqepchalMmFi0zNTy8VBuH5zRYNMRBR0IdDraGd5MPiT+UqTDRHPWqnNOpS0FvsKB5QeTRcWGB6dDibjj9u58VARoizu5qQcOR2mMpqZWvRkTAUmZSewO8GC4s0wnJVfXr1fwxWQfsV0cm+zbK5ZpPPbC2teNi8wBFfi7WSCYjEhgr2FcMwri535LiSUi2ZfcYPIR6Db1N6D8smHcIPPYuh5PSL2b67KoS3lU2DsiPQKMsx7PI4X6+Iu4tMn22Y5zWVDlGHoFyH3IMA23s8YoybQybmSlbDC1fQoMOMM+Yd1zStJxTgIi4SV8qIWPcmU0/ldNqGTpPxHpLj4Y32EUySiPYmhbBH2NAruf/qdpwvLPfBvjwuWGkQh7Asc5gpDoHdziccE0Zsgnq4bc2whEkc1c8M1Hmduw8YZFSM3NE9BdkHiuM4vEP+coO54MFwCJrvENEHxWogQV1yLfFZ126j0sxjSMbx5YMNRziLMIxxcwfKkC86cOTN3K0=
+
+after_deploy:
+  - conventional-github-releaser -p videojs
 
 cache:
   directories:
-    - node_modules
+  - node_modules
+env:
+  global:
+    secure: RUZc4nfcgUKoT4oOnTPh+xbTPn0m9oAK+Oofcp5DnCuUUF0dhf5hWzIceGBQX8+bsFYoHxcwqwqwIFqHmJSxJGZbrarTaUvb5UipE4K3lUbGOkzVKMQ8JyUTQh/20j9BSS5E6MKaM3cTNJ4eZr/eS801AWKkd0zL6ZfXmHyStbooH5bl4ZTy8jaO3Yvj0xLzX9KAd5TeEQ6KZb6EBuVd6r7QMnK64vmqS3SHpICoKTfO5868edtNXE7P0xEJNwIf36AvyIb8veYi0Mj1MNQXJvOwhX7dU/AmWfLv2uaRazMvxHt1NISlhGVevPLqPuaBakPQu8kBnvRHl5SXdiNc62HAYXoISYuAf0JfRbMlIuG1KzwgTY/2xlsqb3xnAkweZk7shA9p+1E8mf2tSXaK9knF46qubheMb4kV//hnBZqR26h8FDp4f/aV7CxxO4t91uL4rkP8nQmL3pccUYbSXB5qBl2PdDBBlQ42o80c9sNg8WD/xYQacGrPfIstJRMKrCVEhEpOOG+wxoO80kyezpVVhUTNM3/JIqDHIl93+mtrbqAyZtw/E+YciaswbijWQGDHdANrrnS6uhEQMtxtb2jX7CBtGz2fPHVFKZ2DHbdFkGIjFpHfKV7t3hg4roDvhcM2vAXgPPg2oftetROOhxVmaJcjbqPjxceExfRXY0c=

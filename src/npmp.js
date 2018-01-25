@@ -10,6 +10,8 @@ const config = require('./config');
 const scriptMatches = require('./script-matches');
 const mapPromise = require('./map-promise');
 const mapSeriesPromise = require('./map-series-promise');
+const saveHusky = require('./save-husky');
+const saveNpm = require('./save-npm');
 
 const npmp = function(argv) {
   const args = argv;
@@ -22,6 +24,8 @@ const npmp = function(argv) {
     commandsOnly: false,
     printConfig: false,
     shorten: true,
+    saveNpm: false,
+    saveHusky: false,
     tasks: [],
     subArgs: []
   };
@@ -34,6 +38,9 @@ const npmp = function(argv) {
     console.log();
     console.log('  -p,  --parallel [scripts...]     Run specified scripts in parallel');
     console.log('  -s,  --series   [scripts...]     Run specified scripts in series');
+    console.log('  -s,  --serial   [scripts...]     An alias for series');
+    console.log('  -sn, --save-npm                  Save npmp scripts that match npm lifecycle to npm.scripts');
+    console.log('  -sh, --save-husky                Save npmp scripts that match husky git hooks');
     console.log('  -V,  --version                   Print version and exit');
     console.log('  -h,  --help                      Print usage and exit');
     console.log('  -q,  --quiet                     Only print errors and warnings');
@@ -75,8 +82,12 @@ const npmp = function(argv) {
       options.shorten = false;
     } else if ((/^(--parallel|-p)$/).test(arg)) {
       currentType = 'parallel';
-    } else if ((/^(--series|-s)$/).test(arg)) {
+    } else if ((/^(--series|-s|--serial)$/).test(arg)) {
       currentType = 'series';
+    } else if ((/^(-sh|--save-husky)$/).test(arg)) {
+      options.saveHusky = true;
+    } else if ((/^(-sn|--save-npm)$/).test(arg)) {
+      options.saveNpm = true;
     } else {
       const lastTask = options.tasks[options.tasks.length - 1];
       const scripts = scriptMatches(arg);
@@ -93,6 +104,18 @@ const npmp = function(argv) {
     delete config.scripts;
     delete config.pkg;
     console.log(JSON.stringify(config, null, 2));
+    process.exit(0);
+  }
+
+  if (options.saveHusky || options.saveNpm) {
+    if (options.saveHusky) {
+      saveHusky();
+    }
+
+    if (options.saveNpm) {
+      saveNpm();
+    }
+
     process.exit(0);
   }
 

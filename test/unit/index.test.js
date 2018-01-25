@@ -139,6 +139,50 @@ test.afterEach.always((t) => {
   });
 });
 
+['-sh', '--save-husky'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(4);
+    return t.context.modifyPkg({'npm-preset': {scripts: {precommit: 'touch ./file.test'}}}).then(() => {
+      return promiseSpawn('npmp', [o, 'precommit'], {cwd: t.context.dir});
+    }).then((result) => {
+      t.not(result.stdout.trim(), 0, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+
+      return exists(path.join(t.context.dir, 'file.test'));
+    }).then((results) => {
+      t.is(results[0].exists, false, 'file.test not created');
+
+      return fs.readFileAsync(path.join(t.context.dir, 'package.json'));
+    }).then((data) => {
+      const pkg = JSON.parse(data);
+
+      t.is(pkg.scripts.precommit, 'npmp precommit', 'husky script copied');
+    });
+  });
+});
+
+['-sn', '--save-npm'].forEach(function(o) {
+  test(o, (t) => {
+    t.plan(4);
+    return t.context.modifyPkg({'npm-preset': {scripts: {install: 'touch ./file.test'}}}).then(() => {
+      return promiseSpawn('npmp', [o, 'install'], {cwd: t.context.dir});
+    }).then((result) => {
+      t.not(result.stdout.trim(), 0, 'stdout');
+      t.is(result.stderr.trim().length, 0, 'no stderr');
+
+      return exists(path.join(t.context.dir, 'file.test'));
+    }).then((results) => {
+      t.is(results[0].exists, false, 'file.test not created');
+
+      return fs.readFileAsync(path.join(t.context.dir, 'package.json'));
+    }).then((data) => {
+      const pkg = JSON.parse(data);
+
+      t.is(pkg.scripts.install, 'npmp install', 'npm lifecycle script copied');
+    });
+  });
+});
+
 test('object author is stringified', (t) => {
   t.plan(1);
   return t.context.modifyPkg({author: {name: 'test', email: 'test@email.com', url: 'http://email.com'}}).then(() => {

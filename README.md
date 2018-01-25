@@ -9,7 +9,7 @@
 ## Table of Contents
 
 * [Benefits over vanilla npm scripts](#benefits-over-vanilla-npm-scripts)
-* [Usage](#usage)
+* [Testing it out](#testing-it-out)
   * [using the command line](#using-the-command-line)
   * [adding scripts via  package.json](#adding-scripts-via--packagejson)
   * [adding scripts via presets](#adding-scripts-via-presets)
@@ -42,12 +42,17 @@
   * `echo /Users/Bill/Projects/some-awesome-thing/node_modules/npm-preset-builder/config/test.js` -> `echo <npmp-builder>/config/test.js`
 * Any installed binary from `node_modules/.bin` can be run by name
 
-## Usage
+## Testing it out
 
-To install use npm:
+Commands to run to get a test enviornment
 
-```bash
-npm i npm-preset
+```sh
+git clone https://github.com/BrandonOCasey/npm-preset`
+cd npm-preset
+npm i
+npm run test-setup
+cd test/fixtures/playground
+npmp echo
 ```
 
 ### using the command line

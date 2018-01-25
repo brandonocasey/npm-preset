@@ -16,10 +16,10 @@
     "posttest": "npm run lint",
     "lint": "npm run lint:js && npm run lint:docs",
     "lint:js": "eslint -c eslint-config-videojs src test/unit test/scripts --rule '{max-len: 0}'",
-    "lint:docs": "remark README.md BENCHMARKS.md '.github/*.md' -r scripts/remark-lint.js",
-    "docs:toc": "remark README.md BENCHMARKS.md -o -r scripts/remark-toc.js ",
+    "lint:docs": "remark CONTRIBUTING.md README.md BENCHMARKS.md '.github/*.md' -r scripts/remark-lint.js",
+    "docs:toc": "remark CONTRIBUTING.md README.md BENCHMARKS.md -o -r scripts/remark-toc.js ",
     "prepush": "npm run lint",
-    "precommit": "npm run docs:toc && git add README.md BENCHMARKS.md",
+    "precommit": "npm run docs:toc && git add README.md BENCHMARKS.md CONTRIBUTING.md",
     "version": "node scripts/version.js"
   },
   "repository": {

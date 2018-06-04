@@ -83,7 +83,6 @@ ${JSON.stringify(benchPkg['npm-preset'].scripts, null, 2)}
 ${JSON.stringify(benchPkg.scripts, null, 2)}
 \`\`\`
 
-
 ## Results
 
 \`\`\`sh

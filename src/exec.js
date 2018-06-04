@@ -13,7 +13,7 @@ const TEN_MB = 10485760;
  * @param {string} command
  *        The command to run in an array form.
  *
- * @returns {Promise}
+ * @return {Promise}
  *          A promise that is resolved when the command exits
  */
 const exec = function(con, command) {

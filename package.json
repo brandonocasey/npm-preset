@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "shell-quote": "^1.6.1",
-    "tabtab": "^2.2.2"
+    "tabtab": "^3.0.2"
   },
   "ava": {
     "timeout": "15s"

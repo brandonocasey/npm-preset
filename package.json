@@ -59,7 +59,7 @@
     "timeout": "15s"
   },
   "devDependencies": {
-    "ava": "^0.25.0",
+    "ava": "^1.4.1",
     "babel-eslint": "^8.2.1",
     "bluebird": "^3.5.1",
     "conventional-changelog-cli": "^2.0.0",

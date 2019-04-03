@@ -61,7 +61,7 @@
   "devDependencies": {
     "ava": "^0.25.0",
     "babel-eslint": "^8.2.1",
-    "bluebird": "^3.5.1",
+    "bluebird": "^3.5.4",
     "conventional-changelog-cli": "^2.0.0",
     "conventional-changelog-videojs": "^3.0.0",
     "conventional-github-releaser": "^3.1.0",
